@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 
 /**
  * Graphical interface for convolutional network for image classification on MNIST dataset
- * <p>
+ *
  * JavaFX javadocs:   https://openjfx.io/javadoc/18/
  *
  * @author r cook
