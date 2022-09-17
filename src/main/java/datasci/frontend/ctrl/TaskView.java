@@ -199,9 +199,13 @@ public class TaskView {
             if (TRAIN_NET.equalsIgnoreCase(netOption)) {
                 // total data samples to load for training network
                 totalSamples = netConfig.generalConfig.totalTrainingSamples;
+                // fit params not required before training run
+                runBtn.setDisable(false);
             } else if (TEST_NET.equalsIgnoreCase(netOption)) {
                 // total data samples to load for testing network
                 totalSamples = netConfig.generalConfig.totalTestingSamples;
+                // fit params must be loaded before test run
+                runBtn.setDisable(true);
             } else {
                 throw new RuntimeException("Error in netOption: " + netOption);
             }
@@ -577,7 +581,7 @@ public class TaskView {
             xAxis.setAutoRanging(false);
             //
             NumberAxis yAxis = new NumberAxis();
-            yAxis.setLabel("% Batch Accuracy");
+            yAxis.setLabel("% Accuracy");
             yAxis.setLowerBound(0.0);
             yAxis.setUpperBound(100.0);
             yAxis.setTickUnit(10.0);
@@ -1005,7 +1009,16 @@ public class TaskView {
             File file = ViewUtil.openFileDialog("Import Training FitParams");
             if (file != null) {
                 InputStream src = FileUtil.getInputStream(file);
-                taskResult.netResult.fitParams = JsonUtil.jsonToFitParams(src);
+                FitParams fitParams = new FitParams();
+                if(taskResult != null) {
+                    fitParams = JsonUtil.jsonToFitParams(src);
+                } else {
+                    fitParams = JsonUtil.jsonToFitParams(src);
+                }
+                FitParamsCache fitParamsCache = FitParamsCache.getInstance();
+                fitParamsCache.setFitParams(fitParams);
+                // train and test allowed to run
+                runBtn.setDisable(false);
                 //
                 setReadyFitParams(true);
             }
@@ -1032,8 +1045,15 @@ public class TaskView {
     public int subsetSize(int totalSamples) {
         int subsetSize = 100;
         try {
-            // want roughly 25 subsets
-            subsetSize = totalSamples / 25;
+            // want roughly 50 subsets
+            subsetSize = totalSamples / 50;
+            if(subsetSize == 0){
+                subsetSize = totalSamples;
+            } else {
+                if (subsetSize < 50) {
+                    subsetSize = 50;
+                }
+            }
             SciFmtR sciFmt = getSciFmt(subsetSize);
             int exp = sciFmt.exponent();
             double mant = sciFmt.mantissa();

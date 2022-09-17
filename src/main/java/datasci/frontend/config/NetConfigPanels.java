@@ -7,6 +7,8 @@ public class NetConfigPanels {
 
     public GeneralConfigPanel generalPanel;
     //
+    public BackPropConfigPanel hyperPanel;
+    //
     public InputConfigPanel inputPanel;
     //
     public List<ConvoPoolConfigPanel> convoPoolPanels = new ArrayList<>();

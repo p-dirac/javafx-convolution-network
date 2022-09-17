@@ -5,10 +5,14 @@ import datasci.backend.model.Matrix;
 public class TanhActivation implements ActivationI {
 
     private Matrix dYdZ;
+    private String actName = ActE.TANH.label;
     public TanhActivation() {
 
     }
 
+    public String getActName() {
+        return actName;
+    }
     /**
      * Activation function for training phase
      * Find transformation y = F(z), where F is the activation function, z is input matrix

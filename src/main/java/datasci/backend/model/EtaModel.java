@@ -1,4 +1,4 @@
-package datasci.frontend.util;
+package datasci.backend.model;
 
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;

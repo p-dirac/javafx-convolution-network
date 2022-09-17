@@ -8,7 +8,7 @@ set jfx=%jfxbase%\bin
 set jfxlibs=%jfxbase%\lib
 set jdk=%jdkbase%\bin
 
-set mainlib=C:\ZZ-Data-Science\digitFx\target\classes
+set mainlib=C:\ZZ-Data-Science\javafx-convolution-network\target\classes
 set data=C:\ZZ-Data-Science\datasets
 
 set mylibs=%jfxlibs%\*;./lib/*;%data%;.\src\main\resources;%mainlib%

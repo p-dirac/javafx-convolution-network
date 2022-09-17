@@ -17,9 +17,13 @@ public class ActivationFactory {
                 case IDENT:
                     actFn = new IdentityActivation();
                     break;
+                case LEAKY_LOG:
+                    actFn = new LeakyLogActivation();
+                    break;
                 case LEAKY_RELU:
                     actFn = new LeakyReluActivation();
                     break;
+
                 case SIGMOID:
                     actFn = new SigmoidActivation();
                     break;
@@ -29,6 +33,13 @@ public class ActivationFactory {
                 case TANH:
                     actFn = new TanhActivation();
                     break;
+                case TANH_SCALED:
+                    actFn = new TanhScaledActivation();
+                    break;
+                case TINY_RELU:
+                    actFn = new TinyReluActivation();
+                    break;
+
                 default:
                     actFn = new IdentityActivation();
             }

@@ -72,7 +72,7 @@ public class ConvoPoolConfigPanel {
             grid.add(filterSizeField, 1, row);
             Cert.checkIntField(filterSizeField);
             //
-            Label labelNum = new Label("Number of Filters:");
+            Label labelNum = new Label("Number of Output Nodes:");
             // grid cell index: col, row
             grid.add(labelNum, 0, ++row);
             grid.add(numFiltersField, 1, row);

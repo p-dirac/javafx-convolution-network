@@ -198,28 +198,8 @@ public class ImageDataUtil {
                         double d = (avg / 255.0);
 
                         // translate to create - and + values : -0.5 to +0.5
-                       // d = d - 0.5;
+                 //       d -= 0.5;
 
-                        // digitize to small values
-/*
-                        if (d < 0.5) {
-                            d = 0.0;
-                        } else {
-                            d = 0.1;
-                        }
-
-*/
-
-                        /*
-                        if (d < 0.5) {
-                            d = 0.0;
-                        } else if (d < 0.75) {
-                            d = 0.1;
-                        } else {
-                            d = 0.8;
-                        }
-
-                         */
                         //   LOG.info("loadImageData, x: " + x + ", y: " + y + ", d: " + d);
                         MTX.setCell(data, x, y, d);
                     }

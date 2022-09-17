@@ -8,10 +8,13 @@ import java.util.logging.Logger;
 public class IdentityActivation implements ActivationI {
     private static final Logger LOG = Logger.getLogger(IdentityActivation.class.getName());
     private Matrix dYdZ;
-
+    private String actName = ActE.IDENT.label;
     public IdentityActivation() {
     }
 
+    public String getActName() {
+        return actName;
+    }
     /**
      * Activation function for training phase
      * Find transformation y = F(z), where F is the activation function, z is input matrix

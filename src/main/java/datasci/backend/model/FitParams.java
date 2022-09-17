@@ -10,9 +10,10 @@ import java.util.List;
  */
 public class FitParams {
 
-    //
+    // convoPoolList size: # of convolution/pool layers
     public List<ConvoPoolFitParams> convoPoolList = new ArrayList<>();
     //
+    // internalList size: # of internal layers
     public List<InternalFitParams> internalList = new ArrayList<>();
     //
     public OutputFitParams outputFitParams;

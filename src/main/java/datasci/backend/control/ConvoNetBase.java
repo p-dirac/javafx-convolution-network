@@ -27,7 +27,7 @@ import datasci.backend.layers.PoolLayer;
 import datasci.backend.model.ConvoConfig;
 import datasci.backend.model.ConvoPoolConfig;
 import datasci.backend.model.ConvoPoolFitParams;
-import datasci.backend.model.Evaluation;
+import datasci.backend.model.EvaluationR;
 import datasci.backend.model.InternalConfig;
 import datasci.backend.model.InternalFitParams;
 import datasci.backend.model.MTX;
@@ -142,7 +142,8 @@ public class ConvoNetBase {
     protected int batchSampleCount;
     protected int batchNumCorrect;
     //
-    // NetResult will hold the overall summary of network performance, and also the network training FitParams
+    // NetResult will hold the overall summary of network performance, and also the
+    // network training FitParams
     protected NetResult netResult;
     protected String status;
     //
@@ -210,6 +211,8 @@ public class ConvoNetBase {
             int outputInNodes = imageH * imageH;
             //
             if(convoPoolList.size() > 0) {
+                int convoID = 0;
+                int poolID = 0;
                 for (ConvoPoolConfig convoPool : convoPoolList) {
                     ConvoConfig convoConfig = convoPool.convoConfig;
                     ConvoPoolLayer convoPoolLayer = new ConvoPoolLayer();
@@ -219,18 +222,20 @@ public class ConvoNetBase {
                     LOG.info("filterSize: " + filterSize + ", numFilters: " + numFilters +
                     ", convoInListSize: " + convoInListSize);
                     convoLayer = new ConvoLayer(convoInListSize, numFilters, actFn, filterSize);
-                    convoLayer.setNumFilters(numFilters);
+                    convoLayer.setnOut(numFilters);
+                    convoLayer.setLayerID("convo." + convoID);
                     // nf = n - f + 1
                     convoOutMatrixSize = convoInMatrixSize - filterSize + 1;
                     LOG.info("convoInMatrixSize: " + convoInMatrixSize + ", convoOutMatrixSize: " + convoOutMatrixSize);
                     convoPoolLayer.convoLayer = convoLayer;
                     //
-                    //
+                    // pool input list size = pool output list size
                     poolInListSize = numFilters;
                     PoolConfig poolConfig = convoPool.poolConfig;
                     int poolSize = poolConfig.poolSize;
                     LOG.info("poolSize: " + poolSize + ", numFilters: " + numFilters + ", poolInListSize: " + poolInListSize);
                     poolLayer = new PoolLayer(poolConfig.poolSize);
+                    poolLayer.setLayerID("pool." + poolID);
                     convoPoolLayer.poolLayer = poolLayer;
                     //
                     convoPoolLayers.add(convoPoolLayer);
@@ -245,7 +250,10 @@ public class ConvoNetBase {
 
                     // reset for next layer
                     convoInMatrixSize = poolOutMatrixSize;
+                    // numFilters into convo = numFilters out of pool
                     convoInListSize = poolInListSize;
+                    convoID++;
+                    poolID++;
                 }
                 internalInNodes = poolOutNodes;
                 outputInNodes = poolOutNodes;
@@ -255,20 +263,25 @@ public class ConvoNetBase {
             //
             if(internalList.size() > 0) {
                 internalOutNodes = 0;
+                int internalID = 0;
                 for (InternalConfig internalConfig : internalList) {
                     internalOutNodes = internalConfig.numOutputNodes;
                     LOG.info("internalInNodes: " + internalInNodes + ", internalOutNodes: " + internalOutNodes);
                     ActivationI actFn = ActivationFactory.getActivation(internalConfig.actName);
                     internalLayer = new InternalLayer(internalInNodes, internalOutNodes, actFn);
+                    internalLayer.setLayerID("internal." + internalID);
                     internalLayers.add(internalLayer);
                     //reset for next layer
                     internalInNodes = internalOutNodes;
+                    internalID++;
                 }
                 outputInNodes = internalOutNodes;
             }
             //
+            int outputID = 0;
             ActivationI actFn = ActivationFactory.getActivation(outputConfig.actName);
             outputLayer = new OutputLayer(outputInNodes, outputConfig.numOutputNodes, actFn);
+            outputLayer.setLayerID("output." + outputID);
             //
             // create confusion matrix of number correct along diagonal
             // off diagonal values represent number incorrect for that digit
@@ -336,8 +349,8 @@ public class ConvoNetBase {
      *
      * @return true if output value is correct
      */
-    public Evaluation evaluate() {
-        Evaluation eval = new Evaluation(sampleCount, numCorrect, batchSampleCount, batchNumCorrect);
+    public EvaluationR evaluate() {
+        EvaluationR eval = new EvaluationR(sampleCount, numCorrect, batchSampleCount, batchNumCorrect);
         return eval;
     }
 
@@ -352,17 +365,25 @@ public class ConvoNetBase {
     public FitParams createFitParams() {
         FitParams fitParams = new FitParams();
         try {
-            //
+            // convoPoolList size: # of convolution/pool layers
             List<ConvoPoolFitParams> convoPoolList = new ArrayList<>();
             for (ConvoPoolLayer convoPool : convoPoolLayers) {
+                // convoPoolFitParams: fit parameters for one convolutional layer
+                // filterList:
+                //    outer list size: # output feature maps;
+                //    inner list size: # input feature maps
                 ConvoPoolFitParams convoPoolFitParams = new ConvoPoolFitParams();
+                convoPoolFitParams.layerID = convoPool.convoLayer.getLayerID();
                 convoPoolFitParams.filterList = convoPool.convoLayer.getFilterList();
+                convoPoolFitParams.bias = convoPool.convoLayer.getBias();
                 convoPoolList.add(convoPoolFitParams);
             }
             //
+            // internalList size: # of internal layers
             List<InternalFitParams> internalList = new ArrayList<>();
             for (InternalLayer internal : internalLayers) {
                 InternalFitParams internalFitParams = new InternalFitParams();
+                internalFitParams.layerID = internal.getLayerID();
                 internalFitParams.w = internal.getW();
                 internalFitParams.b = internal.getB();
                 internalList.add(internalFitParams);
@@ -401,6 +422,7 @@ public class ConvoNetBase {
                 ConvoPoolLayer convoPool = convoPoolLayers.get(i);
                 ConvoPoolFitParams convoPoolFitParams = convoPoolList.get(i);
                 convoPool.convoLayer.setFilterList(convoPoolFitParams.filterList);
+                convoPool.convoLayer.setBias(convoPoolFitParams.bias);
             }
             //
             List<InternalFitParams> internalList = fitParams.internalList;

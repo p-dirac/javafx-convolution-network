@@ -142,27 +142,6 @@ public class AppMenu {
         try {
             List<MenuItem> menuItemList = new ArrayList<>();
             //
-            /*
-            MenuItem aItem = new MenuItem("Create  Data");
-            menuItemList.add(aItem);
-            aItem.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent t) {
-                    LOG.log(Level.INFO, "Create  Data");
-                }
-            });
-        */
-
-            //
-            MenuItem bItem = new MenuItem("Save  Data");
-            menuItemList.add(bItem);
-            bItem.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent t) {
-                    LOG.log(Level.INFO, "Save  Data");
-                    //delegate tab view
-                }
-            });
             //
             //separator
             menuItemList.add(new SeparatorMenuItem());
@@ -261,7 +240,7 @@ public class AppMenu {
                 @Override
                 public void handle(ActionEvent t) {
                     LOG.log(Level.INFO, "Import FitParams");
-                    Tab tab = tabs.addOrSelectTab("Import FitParams");
+                 //   Tab tab = tabs.addOrSelectTab("Import FitParams");
                     if (TRAIN_NET.equalsIgnoreCase(netOption)) {
                         // training network
                         if (taskTrainView != null) {
@@ -373,6 +352,8 @@ public class AppMenu {
                         netOption = TRAIN_NET;
                         taskTrainView.setNetOption(TRAIN_NET);
                         taskTrainView.initConfig(config);
+                        // FitParams may be imported, enable menu item
+                        importFitParamsItem.setDisable(false);
                         taskTrainView.initPanels();
                         taskTrainView.readyFitParamsProperty().addListener(new ChangeListener() {
                             @Override
@@ -380,6 +361,7 @@ public class AppMenu {
                                 //   LOG.log(Level.INFO, "prop change: old: " + oldVal + ", new: " + newVal);
                                 Boolean readyProp = (Boolean) newVal;
                                 // FitParams is ready, enable menu item
+
                                 // FitParams not ready, disable menu item
                                 exportFitParamsItem.setDisable(!readyProp.booleanValue());
                             }
@@ -424,10 +406,12 @@ public class AppMenu {
                         netOption = TEST_NET;
                         taskTestView.setNetOption(TEST_NET);
                         taskTestView.initConfig(config);
+                        // FitParams may be imported, enable menu item
+                        importFitParamsItem.setDisable(false);
                         taskTestView.initPanels();
                     } else {
                         Alert alert = new Alert(Alert.AlertType.ERROR,
-                                "Configuration is null",
+                                "Configuration must be imported",
                                 ButtonType.OK);
                         Optional<ButtonType> result = alert.showAndWait();
                         LOG.log(Level.INFO, "alert result: " + result);
@@ -480,6 +464,13 @@ public class AppMenu {
                 @Override
                 public void handle(ActionEvent t) {
                     LOG.log(Level.INFO, "License");
+                    Dialog<String> dialog = new Dialog<>();
+                    dialog.setTitle("License Dialog");
+                    dialog.setContentText("Copyright 2022 Ronald Cook\n" +
+                            "\n" +
+                            "  Licensed under the Apache License, Version 2.0");
+                    dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+                    dialog.showAndWait();
                 }
             });
 
@@ -492,7 +483,7 @@ public class AppMenu {
                     LOG.log(Level.INFO, "About");
                     Dialog<String> dialog = new Dialog<>();
                     dialog.setTitle("About Dialog");
-                    dialog.setContentText("ConvoMainFx Application, version 2022.5.1");
+                    dialog.setContentText("FxConvoNet, version 2022.9.1");
                     dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
                     dialog.showAndWait();
                 }

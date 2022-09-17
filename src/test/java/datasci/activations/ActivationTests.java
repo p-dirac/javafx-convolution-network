@@ -1,5 +1,6 @@
 package datasci.activations;
 
+import datasci.backend.activations.ActE;
 import datasci.backend.activations.LeakyReluActivation;
 import datasci.backend.activations.SigmoidActivation;
 import datasci.backend.activations.SoftmaxActivation;

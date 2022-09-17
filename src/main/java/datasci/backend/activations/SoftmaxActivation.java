@@ -11,10 +11,14 @@ public class SoftmaxActivation implements ActivationI {
     private static final Logger LOG = Logger.getLogger(SoftmaxActivation.class.getName());
 
     private Matrix dYdZ;
+    private String actName = ActE.SOFTMAX.label;
 
     // ref: https://www.mldawn.com/wp-content/uploads/2020/05/backprop-softmax-cross-8-1024x575.png
     public SoftmaxActivation() {
+    }
 
+    public String getActName() {
+        return actName;
     }
 
     /**
@@ -44,12 +48,15 @@ public class SoftmaxActivation implements ActivationI {
                 //
                 // Note: all y values are always positive (0 to 1) due to softmax function
                 //
+                /*
                 if (Double.isNaN(y.a[k])) {
                     double zz = z.a[k] - maxZ;
                     LOG.info("maxZ : " + maxZ + ", total: " + total);
                     LOG.info("z.a[k] : " + z.a[k] + ", zz: " + zz + ", k: " + k);
-                    throw new RuntimeException("y is NaN");
+                 //   throw new RuntimeException("y is NaN");
                 }
+
+                 */
                 //
                 // compute derivative dYdZ
                 createDeriv(y);

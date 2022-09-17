@@ -1,5 +1,6 @@
 package datasci.model;
 
+import datasci.backend.model.ConvoNode;
 import datasci.backend.model.MTX;
 import datasci.backend.model.Matrix;
 import org.junit.jupiter.api.Assertions;
@@ -7,9 +8,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MatrixTests {
-
+    private static final Logger LOG = Logger.getLogger(MatrixTests.class.getName());
     private static final double DELTA = 1e-10;
 
     @Test
@@ -190,6 +193,117 @@ public class MatrixTests {
     }
 
     @Test
+    void sumOfList(){
+        double[] x1 = { 4.0, 3.0, 2.0, 5.0};
+        Matrix m1 = new Matrix(4, 1, x1);
+        double[] x2 = {2.0, -8.0, 1.0, 1.0};
+        Matrix m2 = new Matrix(4, 1, x2);
+        double[] x3 = {1.0, 3.0, 2.0, 3.0};
+        Matrix m3 = new Matrix(4, 1, x3);
+        double[] x4 = {5.0, 6.0, 1.0, -2.0};
+        Matrix m4 = new Matrix(4, 1, x4);
+
+        //
+        // split matrix m into 4 smaller matrix
+        List<Matrix> mList = new ArrayList<>();
+        mList.add(m1);
+        mList.add(m2);
+        mList.add(m3);
+        mList.add(m4);
+
+        Matrix sum = MTX.sumOfList(mList);
+
+        double[] exSum = {12.0, 4.0, 6.0, 7.0};
+
+
+        Assertions.assertArrayEquals(exSum, sum.a, DELTA,"MTX sumOfList failed");
+
+    }
+    @Test
+    void sumOfNestedList(){
+
+        // assume 3 output nodes, 4 input nodes
+        // for a total of 12 filters
+        int nOut = 3;
+        int nIn = 4;
+        // filters for sample 1
+        Matrix[][] f1 = new Matrix[nOut][nIn];
+        // create 12 filters for sample 1
+        // each filter, w, is 2x2 matrix
+        for(int k = 0; k < nOut; k++){
+            double u = nOut*0.5;
+            for(int i = 0; i < nIn; i++) {
+                double r = -nIn*0.2;
+                double[] w = {4.0, u, r, 5.0};
+                f1[k][i] = new Matrix(2, 2, w);
+            }
+        }
+        // filters for sample 2
+        Matrix[][] f2 = new Matrix[nOut][nIn];
+        // create 12 filters for sample 1
+        // each filter, w, is 2x2 matrix
+        for(int k = 0; k < nOut; k++){
+            double u = nOut*0.7;
+            for(int i = 0; i < nIn; i++) {
+                double r = -nIn*0.4;
+                double[] w = {2.0, u, r, 3.0};
+                f2[k][i] = new Matrix(2, 2, w);
+            }
+        }
+
+
+        // nestedList: simulate a list of samples in a batch
+        // each inner List<ConvoNode> represents a set of 12 filters for one sample
+        List<List<ConvoNode>> nestedList = new ArrayList<>();
+
+        // assume 3 output nodes, 4 input nodes
+        // set of 12 filters for sample 1
+        List<ConvoNode> batachList1 = new ArrayList<>();
+        for(int k = 0; k < nOut; k++) {
+            ConvoNode node = new ConvoNode();
+            for (int i = 0; i < nIn; i++) {
+                node.add(f1[k][i]);
+            }
+            batachList1.add(node);
+        }
+        //
+        List<ConvoNode> batachList2 = new ArrayList<>();
+        for(int k = 0; k < nOut; k++) {
+            ConvoNode node = new ConvoNode();
+            for (int i = 0; i < nIn; i++) {
+                node.add(f2[k][i]);
+            }
+            batachList2.add(node);
+        }
+        //
+        // nestedList: contains filters for 2 samples
+        nestedList.add(batachList1);
+        nestedList.add(batachList2);
+
+        // sum over the samples
+        List<ConvoNode> sampleSum = MTX.sumOfBatchNestedList(nestedList);
+        //
+        int len = sampleSum.size();
+    //    LOG.info("len: " + len);
+        for(int k = 0; k < len; k++){
+            ConvoNode nodeSum = sampleSum.get(k);
+            int nodeSize = nodeSum.size();
+            for(int i = 0; i < nodeSize; i++){
+                // check sums of filters
+                Matrix sumW = nodeSum.get(i);
+             //   LOG.info("k: " + k + ", i:" + i + ", sumW: " + sumW);
+                //
+                // expect filters from each sample to be added together
+                Matrix exSum = MTX.add(f1[k][i], f2[k][i]);
+                //
+                Assertions.assertArrayEquals(exSum.a, sumW.a, DELTA,"MTX sumOfNestedList failed");
+            }
+        }
+
+
+    }
+
+    @Test
     void subMatrix() {
         double[] i = {3.0, 0.0, 1.0, 2.0, 7.0, 4.0,
                 1.0, 5.0, 8.0, 9.0, 3.0, 1.0,
@@ -200,9 +314,9 @@ public class MatrixTests {
         Matrix m = new Matrix(6, 6, i);
 
         int rowStart = 1;
-        int rowEnd = 3;
+        int rowEnd = 4;
         int colStart = 2;
-        int colEnd = 4;
+        int colEnd = 5;
         Matrix mSub = MTX.subMatrix(m, rowStart, rowEnd, colStart, colEnd);
 
         double[] exSub = {8.0, 9.0, 3.0,
@@ -214,7 +328,8 @@ public class MatrixTests {
 
     @Test
     void convolve() {
-        double[] i = {3.0, 0.0, 1.0, 2.0, 7.0, 4.0,
+        double[] i = {
+                3.0, 0.0, 1.0, 2.0, 7.0, 4.0,
                 1.0, 5.0, 8.0, 9.0, 3.0, 1.0,
                 2.0, 7.0, 2.0, 5.0, 1.0, 3.0,
                 0.0, 1.0, 3.0, 1.0, 7.0, 8.0,
@@ -222,21 +337,94 @@ public class MatrixTests {
                 2.0, 4.0, 5.0, 2.0, 3.0, 9.0};
         Matrix m = new Matrix(6, 6, i);
         //
-        double[] u = {1.0, 0.0, -1.0,
+        double[] u = {
                 1.0, 0.0, -1.0,
-                1.0, 0.0, -1.0,};
+                0.0, 1.0, -1.0,
+                1.0, -1.0, 0.0,};
         Matrix f = new Matrix(3, 3, u);
 
         Matrix mC = MTX.convolve(m, f);
 
-        double[] exC = {-5.0, -4.0, 0.0, 8.0,
-                -10.0, -2.0, 2.0, 3.0,
-                0.0, -2.0, -4.0, -7.0,
-                -3.0, -2.0, -3.0, -16.0};
+        double[] exC = {
+                -6.0, 2.0, -3.0, 4.0,
+                -3.0, -9.0, 11.0, 0.0,
+                0.0, 5.0, -10.0, 5.0,
+                -4.0, -6.0, 3.0, -14.0};
 
 
         Assertions.assertArrayEquals(exC, mC.a, DELTA,"MTX convolve failed");
     }
+
+    @Test
+    void unfold() {
+        double[] i = {
+                3.0, 0.0, 1.0, 2.0, 7.0, 4.0,
+                1.0, 5.0, 8.0, 9.0, 3.0, 1.0,
+                2.0, 7.0, 2.0, 5.0, 1.0, 3.0,
+                0.0, 1.0, 3.0, 1.0, 7.0, 8.0,
+                4.0, 2.0, 1.0, 6.0, 2.0, 8.0,
+                2.0, 4.0, 5.0, 2.0, 3.0, 9.0
+        };
+        Matrix m = new Matrix(6, 6, i);
+
+        int frows = 3;
+        int fcols = 3;
+        Matrix mU = MTX.unfold(m, frows, fcols);
+        LOG.log(Level.INFO, "mU: " + mU );
+
+        // exU size: # rows = 6 - 3 + 1 = 4 x 4;  # cols = 3 * 3 = 9
+        double[] exU = {
+                3.0, 0.0, 1.0, 1.0, 5.0, 8.0, 2.0, 7.0, 2.0,
+                0.0, 1.0, 2.0, 5.0, 8.0, 9.0, 7.0, 2.0, 5.0,
+                1.0, 2.0, 7.0, 8.0, 9.0, 3.0, 2.0, 5.0, 1.0,
+                2.0, 7.0, 4.0, 9.0, 3.0, 1.0, 5.0, 1.0, 3.0,
+
+                1.0, 5.0, 8.0, 2.0, 7.0, 2.0, 0.0, 1.0, 3.0,
+                5.0, 8.0, 9.0, 7.0, 2.0, 5.0, 1.0, 3.0, 1.0,
+                8.0, 9.0, 3.0, 2.0, 5.0, 1.0, 3.0, 1.0, 7.0,
+                9.0, 3.0, 1.0, 5.0, 1.0, 3.0, 1.0, 7.0, 8.0,
+
+                2.0, 7.0, 2.0, 0.0, 1.0, 3.0, 4.0, 2.0, 1.0,
+                7.0, 2.0, 5.0, 1.0, 3.0, 1.0, 2.0, 1.0, 6.0,
+                2.0, 5.0, 1.0, 3.0, 1.0, 7.0, 1.0, 6.0, 2.0,
+                5.0, 1.0, 3.0, 1.0, 7.0, 8.0, 6.0, 2.0, 8.0,
+
+                0.0, 1.0, 3.0, 4.0, 2.0, 1.0, 2.0, 4.0, 5.0,
+                1.0, 3.0, 1.0, 2.0, 1.0, 6.0, 4.0, 5.0, 2.0,
+                3.0, 1.0, 7.0, 1.0, 6.0, 2.0, 5.0, 2.0, 3.0,
+                1.0, 7.0, 8.0, 6.0, 2.0, 8.0, 2.0, 3.0, 9.0
+        };
+
+        Assertions.assertArrayEquals(exU, mU.a, DELTA,"MTX unfold failed");
+
+        //
+        // Now, compare normal convolve with unfolded matrix multiply
+        //
+        // create sample filter array (3,3)
+        double[] d = {
+                1.0, 0.0, -1.0,
+                0.0, 1.0, -1.0,
+                1.0, -1.0, 0.0,};
+        // f: filter matrix
+        Matrix f = new Matrix(3, 3, d);
+        LOG.log(Level.INFO, "f: " + f );
+        //
+        // mC: normal matrix convolve of input matrix m with filter f
+        Matrix mC = MTX.convolve(m, f);
+        LOG.log(Level.INFO, "mC: " + mC );
+        //
+        // multiply unfolded m with flattened filter f
+        f.rows = 9;
+        f.cols = 1;
+        // exC: unfolded matrix multiply
+        Matrix exC = MTX.mult(mU, f);
+        LOG.log(Level.INFO, "exC: " + exC );
+        //
+        // compare matrix convolve mC with unfolded matrix multiply exC
+        Assertions.assertArrayEquals(exC.a, mC.a, DELTA,"MTX unfold failed");
+    }
+
+
     @Test
     void copyAndPad() {
         double[] x = {1.0, 3.0, 2.0, 1.0,

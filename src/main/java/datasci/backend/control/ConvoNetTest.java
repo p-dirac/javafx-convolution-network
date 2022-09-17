@@ -21,6 +21,7 @@ import datasci.backend.layers.ConvoLayer;
 import datasci.backend.layers.ConvoPoolLayer;
 import datasci.backend.layers.InternalLayer;
 import datasci.backend.layers.PoolLayer;
+import datasci.backend.model.FitParams;
 import datasci.backend.model.ImageDataUtil;
 import datasci.backend.model.MTX;
 import datasci.backend.model.Matrix;
@@ -84,9 +85,12 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
     private static final long SHUFFLE_SEED = 4321;
     //
     //
-    private int batchSize;
     private int batchSampleBase;
     private int totalSamples;
+    private int batchSize = 1;
+    // doNow flag for debug logging
+    private boolean doNow;
+
     //
     private String status;
     // input list of image samples
@@ -94,9 +98,6 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
     // list of column matrices for actual output
     private List<Matrix> actualIndexList;
     //
-    // etaSchedule: key = sample count, value = gradient descent rate
-    private TreeMap<Integer, Double> etaSchedule;
-
 
     /**
      * Convolution network for testing (no back propagation)
@@ -123,12 +124,22 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
         try{
             configureNet(config);
             prepAll();
+            if(netResult.fitParams != null){
+                setFitParams(netResult.fitParams);
+            } else {
+                String msg = "Model fitParams must be set for test run";
+                LOG.log(Level.SEVERE, msg);
+                throw new RuntimeException(msg);
+            }
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
         }
     }
 
+    public void setDoNow(boolean doNow) {
+        this.doNow = doNow;
+    }
 
     /**
      * Perform all preparations before network propagation
@@ -148,11 +159,6 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
                 actualIndexList = prepActualMatrix();
             }
             int len = dataList.size();
-            batchSize = config.generalConfig.batchSize;
-            // check batch size
-            if (batchSize > len) {
-                batchSize = len;
-            }
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
@@ -211,7 +217,7 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
                 internalOut = internal.testForward(internalIn);
                 internalIn = internalOut;
             }
-            internalOut.checkNaN("internalOut");
+      //      internalOut.checkNaN("internalOut");
             //
             Matrix finalOut = outputLayer.testForward(internalOut);
 

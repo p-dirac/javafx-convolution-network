@@ -46,7 +46,8 @@ public class PoolLayer {
     private List<Matrix> outList;
     // matrix list of indexes where max pool occurred in each input matrix
     private List<Matrix> indexList;
-
+    // ID for debug purposes
+    private String layerID;
 
     /**
      * Instantiates a new Pool layer.
@@ -61,6 +62,15 @@ public class PoolLayer {
      */
     public PoolLayer(int poolSize) {
         this.poolSize = poolSize;
+    }
+
+
+    public String getLayerID() {
+        return layerID;
+    }
+
+    public void setLayerID(String layerID) {
+        this.layerID = layerID;
     }
 
     public LayerE getLayerType() {
@@ -92,32 +102,34 @@ public class PoolLayer {
             //
             // find pool matrix from each input matrix
             int inSize = inList.size();
-            LOG.fine("inList size: " + inSize);
+       //     LOG.fine("inList size: " + inSize);
             for (int k = 0; k < inSize; k++) {
                 // pool input matrix x(nf, nf), where nf = n - f + 1
                 Matrix x = inList.get(k);
-                x.checkNaN("PoolLayer x before maxPool");
+            //    x.checkNaN("PoolLayer x before maxPool");
+                // stride = poolSize
                 // yOut: pool output matrix ( nfp , nfp ), where nfp = (n-f+1) / p
                 Matrix y = MTX.maxPool(x, poolSize, poolSize);
-                y.checkNaN("pool y after maxPool");
-                MTX.normalizeInPlace(y);
+            //    y.checkNaN("pool y after maxPool");
+                // normalize output to prevent infinity
+       //         MTX.normalizeInPlace(y);
 
                 // number of matrix y in outList = inList size
                 outList.add(y);
-               LOG.fine("pool input x : " + x);
-               LOG.fine("pool output y : " + y);
+          //     LOG.fine("pool input x : " + x);
+          //     LOG.fine("pool output y : " + y);
                 //
                 // save cell where max pool occurred
                 // yOut: pool output matrix ( nfp , nfp ), where nfp = (n-f+1) / p
                 Matrix poolIndex = MTX.poolIndex(x, poolSize, poolSize);
                 indexList.add(poolIndex);
-                LOG.fine("trainForward, poolIndex : " + poolIndex);
+           //     LOG.fine("trainForward, poolIndex : " + poolIndex);
             }
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
         }
-        LOG.fine("outList size: " + outList.size());
+     //   LOG.fine("outList size: " + outList.size());
         return outList;
     }
 
@@ -192,6 +204,9 @@ public class PoolLayer {
                     // set dLdX cell with dLdY value
                     MTX.setCell(dLdX, cellK, cellVal);
                 }
+                //
+          //     MTX.normalizeInPlace(dLdX);
+                //
                 dLdXList.add(dLdX);
             }
             LOG.fine("dLdXList size : " + dLdXList.size());

@@ -31,11 +31,19 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
- * Graphical interface for convolutional network for image classification on MNIST dataset
- *
- * JavaFX javadocs:   https://openjfx.io/javadoc/18/
- *
- * @author r cook
+ Graphical interface for convolutional network for image classification on MNIST datase
+
+ JavaFX javadocs:   https://openjfx.io/javadoc/18/
+
+ The project is a desktop application which assumes a wide screen size.
+ The front end provides a user interface written in JavaFx, while the back end is
+ launched via a JavaFx concurrent task. There is no server involved.
+ For Java programmers who have not used JavaFx, the sample code provides examples
+ of a menu bar, tab panel, data entry form, concurrent task, and output charts.
+ The back end code includes network layers, activation functions, a matrix library,
+ and json utilities.
+
+ @author r cook
  */
 public class FxConvoMain extends Application {
     private static Logger LOG = Logger.getLogger(FxConvoMain.class.getName());
@@ -85,7 +93,8 @@ public class FxConvoMain extends Application {
             if (fis != null) {
                 LogManager logmgr = LogManager.getLogManager();
                 logmgr.readConfiguration(fis);
-                LOG.log(Level.INFO, "logPropFile: " + logPropFile);
+                LOG.log(Level.INFO, "INFO logPropFile: " + logPropFile);
+                LOG.log(Level.FINE, "test FINE: " + logPropFile);
             } else {
                 System.out.println("initLogging error, log propertis file: " + logPropFile + " not found");
             }

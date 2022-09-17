@@ -12,10 +12,65 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Network Internal Layer.
- * <p>
- * backprop ref:
- * https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
+  Network Internal Layer.
+  //
+  backprop ref:
+  https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
+
+ Batch: a small number of samples processed through the forward propagation and back
+ propagation before performing updates on the weights and biases. The purpoase of the
+ batch is to smooth out the updates. If the batch size is 20 samples, and if there
+ are 20,000 samples, the number of batches would be 1000. A batch size of 1 means
+ updates are performed on every sample.
+ //
+ dL/dW = change in loss due to change in weight
+ batch ave[dL/dW] = average of dL/dW over batch size
+ dL/dB = change in loss due to change in bias
+ batch ave[dL/dB] = average of dL/dB over batch size
+ //
+ Eta: gradient descent rate, is defined in a function to vary by sample count, and is a
+ multiplier factor for dL/dW and dL/dB.
+ //
+ Momentum v: exponential average of the gradient steps
+ mu: momentum factor, close to 1, usually about 0.9
+ Momentum update after each batch from i to i+1:
+ v(i + 1) = mu * v(i) - eta * batch ave[dL/dW]
+ //
+ L2 regularization factor, lambda: small number which reduces the weight matrix on each update.
+ //
+ Weight correction after each batch from i to i+1:
+ W(i + 1) = (1 - lambda)*W(i) + v(i + 1)
+ See MathUtil. updateWeightMatrix for implementation details.
+ //
+ Bias correction after each batch from i to i+1:
+ B(i + 1) = B(i) – eta * batch ave[dL/dB]
+ //
+ How to calculate dL/dW?
+ dL/dW = (dL/dY)*(dY/dZ)*(dZ/dW)
+ Recall Z = W*X + B
+ Recall Y = S(Z) where S(Z) is the activation function
+ dL/dY is known from previous layer
+ dY/dZ depends on which activation function is applied
+ dZ/dW = X
+ //
+ How to calculate dL/dB?
+ dL/dB = (dL/dY)*(dY/dZ)*(dZ/dB)
+ dL/dY is known from previous layer
+ dY/dZ depends on which activation function is applied
+ dZ/dB = I
+//
+ Find dL/dX for back propagation:
+ dL/dX = (dL/dY)*(dY/dZ)*(dZ/dX)
+ dL/dY is known from previous layer
+ dY/dZ depends on which activation function is applied
+ dZ/dX = W
+//
+ How to back propagate to previous layer?
+ dL/dY previous layer = dL/dX current layer
+ Apply dL/dW and dL/dB calculations as above to update weight and bias in previous layer.
+ Proceed to calculate dL/dX in previous layer for back prop input (dL/dY) to next previous layer.
+
+
  */
 public class InternalLayer {
 
@@ -53,10 +108,18 @@ public class InternalLayer {
     private double oneMinusLambda;
     // mu:  momentum parameter
     private double mu;
+    //
+    private int batchCount;
+    private List<Matrix> batchWeight = new ArrayList<>();
+    private List<Matrix> batchBias = new ArrayList<>();
 
     // to reproduce results, use same seed for internal layer weights
     private static long INTERNAL_WT_SEED = 1234;
     //
+    // ID for debug purposes
+    private String layerID;
+    // doNow flag for debug logging
+    private boolean doNow;
 
     /**
      * Instantiates a new Internal layer.
@@ -74,6 +137,17 @@ public class InternalLayer {
         this.nIn = nIn;
         this.nOut = nOut;
         this.actFn = actFn;
+    }
+
+    public String getLayerID() {
+        return layerID;
+    }
+
+    public void setLayerID(String layerID) {
+        this.layerID = layerID;
+    }
+    public void setDoNow(boolean doNow) {
+        this.doNow = doNow;
     }
 
     public LayerE getLayerType() {
@@ -175,39 +249,14 @@ public class InternalLayer {
     public Matrix trainForward(Matrix x) {
         this.x = x;
         try {
-            LOG.fine("w : " + w);
-            LOG.fine("x: " + x);
-
-            double maxX = MTX.maxAbsCell(x);
-            if(maxX > MTX.Hi_LIMIT){
-                LOG.info("maxX: " + maxX);
-            }
-
-            //
             // z = W*X + b, where column vector X is the input from previous layer
             // z has nOut rows and nIn columns
             Matrix z = MTX.aXplusB(w, x, b);
-            z.checkNaN("internal train z after aXplusB");
-            double maxZ = MTX.maxAbsCell(z);
-            if(maxZ > MTX.Hi_LIMIT){
-                LOG.info("maxZ: " + maxZ);
-            }
-            MTX.normalizeInPlace(z);
-            double minZ = MTX.minAbsCell(z);
-            if(minZ < MTX.Low_LIMIT){
-                LOG.info("minZ: " + minZ);
-            }
-
-            //
-            z.checkNaN("internal z before actFn");
             y = actFn.trainingFn(z);
-            LOG.fine("y: " + y);
-            //
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
         }
-        LOG.fine("y: " + y);
         return y;
     }
 
@@ -238,7 +287,7 @@ public class InternalLayer {
      * @param dLdY derivative of cost function with respect to layer output y
      * @return derivative of layer output cost with respect to layer input dL/dX
      */
-    public Matrix backProp(Matrix dLdY) {
+    public Matrix backProp(Matrix dLdY, boolean batchCompleted) {
         Matrix dLdX = null;
         try {
             // dLdY(n,1) column vector
@@ -261,17 +310,13 @@ public class InternalLayer {
             // let n = number output nodes, m = number of input nodes
             // dYdZ(n,1): derivative of activation function
             Matrix dYdZ = actFn.derivative();
-            //  dZdW(1,m) <- x(m, 1)
-            Matrix dZdW = MTX.colToRow(x);
-            // dLdB(n,1) = dLdZ * 1
-            Matrix dLdB = dYdZ;
             // dLdZ(n,1) = dLdY(n,1) ** dYdZ(n,1), cell multiply
             Matrix dLdZ = MTX.cellMult(dLdY, dYdZ);
-            LOG.fine("dLdY : " + dLdY);
-            LOG.fine("dYdZ : " + dYdZ);
-            LOG.fine("dLdZ : " + dLdZ);
-            //
-            LOG.fine("dZdW : " + dZdW);
+            //  dZdW(1,m) <- x(m, 1)
+            Matrix dZdW = MTX.colToRow(x);
+            // dZdB = 1;
+            // dLdB(n,1) = dLdZ * dZdB =  dLdZ * 1
+            Matrix dLdB = dLdZ;
             // dZdX(n,m), w(n, m)
             Matrix dZdX = w;
             LOG.fine("dZdX : " + dZdX);
@@ -280,44 +325,37 @@ public class InternalLayer {
             Matrix dLdZrow = MTX.colToRow(dLdZ);
             Matrix dLdXrow = MTX.mult(dLdZrow, dZdX);
             dLdX = MTX.rowToCol(dLdXrow);
-            LOG.fine("dLdX : " + dLdX);
+            //
             // on backprop, pass single col matrix
             // dLdXCol will become the backProp dLdY for the previous layer
             //
             // complete other calculations before updating w and b
-            //
             //
             // dLdW(n, m) = dLdY(n, 1) ** dYdZ(n,1) * dZdW(1,m)
             // dLdY(n, 1) ** dYdZ(n,1) was done above
             // dLdW(n, m) = dLdZ(n,1) * dZdW(1,m)
             Matrix dLdW = MTX.mult(dLdZ, dZdW);
             LOG.fine("dLdW : " + dLdW);
-            MathUtil.updateWeightMatrix(dLdW, eta, w, v, mu, oneMinusLambda);
-            /*
-            // update weight matrix
-            // dw(n, m) = dLdW(n, m) * eta
-            Matrix dw = MTX.mulConstant(dLdW, -eta);
-            // update velocity matrix, initially zero
-            MTX.mulConstInPlace(v, mu);
-            // update velocity matrix with gradient
-            // v = mu * v - eta * dLdW
-            MTX.addInplace(v, dw);
-
-            // L2 regularization to reduce weights on back prop
-            // W(n, m) = W(n, m) * (1 - lambda)
-            MTX.mulConstInPlace(w, oneMinusLambda);
-            // w(n, m) = w(n, m) + dw(m, n)
-            MTX.addInplace(w, dw);
-
-             */
-
-            //
-            // update b matrix
             // db(n, 1) = dLdB(n,1)*eta
-            Matrix db = MTX.mulConstant(dLdB, -eta);
-            LOG.fine("db : " + db);
-            MTX.addInplace(b, db);
+            Matrix dB = MTX.mulConstant(dLdB, -eta);
             //
+            batchWeight.add(dLdW);
+            batchBias.add(dB);
+            if(batchCompleted) {
+                w.checkNaN("InternalLayer ID: " + layerID + ", batch w");
+                dLdW = MTX.listAverage(batchWeight);
+                MathUtil.updateWeightMatrix(dLdW, eta, w, v, mu, oneMinusLambda);
+                //
+                // update bias matrix
+                LOG.fine("bias b: " + b);
+                // bias(n, 1) = bias(n, 1) + db(n, 1)
+                dB = MTX.listAverage(batchBias);
+                MTX.addInplace(b, dB);
+                //
+                batchCount = 0;
+                batchWeight.clear();
+                batchBias.clear();
+            }
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);

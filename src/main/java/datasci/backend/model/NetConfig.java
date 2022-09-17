@@ -7,6 +7,8 @@ public class NetConfig {
     //
     public GeneralConfig generalConfig;
     //
+    public BackPropConfig backPropConfig;
+    //
     public InputConfig inputConfig;
     //
     public List<ConvoPoolConfig> convoPoolList = new ArrayList<>();

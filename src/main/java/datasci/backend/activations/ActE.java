@@ -9,10 +9,13 @@ import java.util.TreeMap;
 public enum ActE {
     NONE("None"),
     IDENT("Identity"),
+    LEAKY_LOG("Leaky Log"),
     LEAKY_RELU("Leaky RELU"),
     SIGMOID("Sigmoid"),
     SOFTMAX("Softmax"),
-    TANH("Hyperbolic Tangent");
+    TANH("Hyperbolic Tangent"),
+    TANH_SCALED("Scaled Hyperbolic Tangent"),
+    TINY_RELU("Tiny RELU");
 
     // label may have spaces and may be more user-friendly than the enum value
     public final String label;

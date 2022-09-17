@@ -1,37 +1,19 @@
 package datasci.frontend.config;
 
-import datasci.backend.model.GeneralConfig;
 import datasci.frontend.util.Cert;
-import datasci.frontend.util.EditingDblCell;
-import datasci.frontend.util.EditingIntCell;
-import datasci.frontend.util.EtaModel;
+import datasci.backend.model.EtaModel;
 import datasci.frontend.util.ViewUtil;
-import datasci.frontend.util.WidthHeightR;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.util.Callback;
 
 import java.text.DecimalFormat;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class GradientRatePanel {
 

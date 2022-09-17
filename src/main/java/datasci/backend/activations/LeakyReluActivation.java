@@ -9,15 +9,20 @@ import java.util.logging.Logger;
 public class LeakyReluActivation implements ActivationI {
     private static final Logger LOG = Logger.getLogger(LeakyReluActivation.class.getName());
     private Matrix dYdZ;
+    private String actName = ActE.LEAKY_RELU.label;
     private double leftSlope = 0.1;
     private double rightSlope = 1.0;
+    //
     public LeakyReluActivation() {
 
+    }
+    public String getActName() {
+        return actName;
     }
 
     /**
      * Activation function for training phase
-     * Find transformation y = F(z), where F is the activation function, z is input matrix
+     * Find transformation y = S(z), where S is the activation function, z is input matrix
      * For training activation, there will be back propagation
      * Find derivative of activation function at same time, and save for back propagation
      *
@@ -34,21 +39,13 @@ public class LeakyReluActivation implements ActivationI {
         // ds/dz = s(z)[1 - s(z)]
         for (int k = 0; k < z.size; k++) {
             double zc = z.a[k];
-            if(Math.abs(zc) > MTX.Hi_LIMIT){
-                zc = Math.signum(zc)*MTX.Hi_LIMIT;
-            }
-
-            if (Double.isNaN(zc)) {
-                LOG.info("z.a[i] : " + z.a[k] + ", k: " + k);
-                throw new RuntimeException("z is NaN");
-            }
             //
             if(zc > 0){
                 // right slope = 1.0
-                y.a[k] = z.a[k];
+                y.a[k] = rightSlope * zc;
                 dYdZ.a[k] = rightSlope;
             } else if(zc <= 0) {
-                y.a[k] = leftSlope * z.a[k];
+                y.a[k] = leftSlope * zc;
                 dYdZ.a[k] = leftSlope;
             }
         }
@@ -82,13 +79,11 @@ public class LeakyReluActivation implements ActivationI {
     }
 
     /**
-     * Find derivative matrix dF/dZ of activation function F with respect to input matrix z
+     * Find derivative matrix dF/dZ of activation function S with respect to input matrix z
      *
-     * @return dF/dZ derivative matrix of activation function F with respect to input z
+     * @return dF/dZ derivative matrix of activation function S with respect to input z
      */
     public Matrix derivative() {
-        // e.g. let s(z) = sigmoid function
-        // ds/dz = s(z)[1 - s(z)]
         return dYdZ;
     }
 }

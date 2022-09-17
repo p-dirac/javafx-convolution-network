@@ -17,7 +17,13 @@ public class ImagePane extends GridOne {
 
     private static final Logger LOG = Logger.getLogger(ImagePane.class.getName());
     private static final DecimalFormat fmtTwo = new DecimalFormat("0.00");
-
+    // normalized image pixel range minPix to maxPix
+    // see ImageDataUtil.loadImageData in back end
+    private static final double minPix = -0.5;
+    private static final double maxPix = 0.5;
+    // rescaled pixel value for plot
+    private static final double minPlotPix = 0.0;
+    private static final double maxPlotPix = 1.0;
 
     /**
      * Create new grid from matrix
@@ -40,10 +46,15 @@ public class ImagePane extends GridOne {
     public void setMatrix(Matrix m) {
         try {
             LOG.info("image matrix: " + m);
+            double pixRange = maxPix - minPix;
             // rows and cols set from matrix m in constructor
             for (int i = 0; i < rows; i++) {
                 for (int j = 0; j < cols; j++) {
                     double d = MTX.getCell(m, i, j);
+                    //rescale to minPlotPix to maxPlotPix
+                //    double p = minPlotPix + (d - minPix)*(maxPlotPix - minPlotPix)/(maxPix - minPix);
+                    // rescale 0 to 1
+                    double p = (d - minPix)/(maxPix - minPix);
                     // new pane for each cell to set background color
                     Pane pane = new Pane();
                     String s = fmtTwo.format(d);
@@ -51,11 +62,11 @@ public class ImagePane extends GridOne {
                     Label t = new Label();
                     t.setText(s);
                     pane.setStyle("-fx-background-color: white; ");
-                    if (d > 0.75) {
+                    if (p > 0.75) {
                         pane.setStyle("-fx-background-color: lime; ");
-                    } else if (d > 0.5) {
+                    } else if (p > 0.5) {
                         pane.setStyle("-fx-background-color: yellow; ");
-                    } else if (d > 0.25) {
+                    } else if (p > 0.25) {
                         pane.setStyle("-fx-background-color:  lemonchiffon; ");
                     } else {
                         pane.setStyle("-fx-background-color: white; ");

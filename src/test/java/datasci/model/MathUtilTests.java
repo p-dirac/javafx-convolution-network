@@ -123,29 +123,34 @@ public class MathUtilTests {
         Assertions.assertEquals(exY, y, DELTA,"MathUtil decayStepFn failed");
         //
         count = 200;
+        int nSteps = count / step;
         y = MathUtil.decayStepFn(minY, maxY, decay, step, count);
-        exY = maxY - decay*1;
+        exY = maxY - decay*nSteps;
         Assertions.assertEquals(exY, y, DELTA,"MathUtil decayStepFn failed");
         //
         count = 201;
+        nSteps = count / step;
         y = MathUtil.decayStepFn(minY, maxY, decay, step, count);
-        exY = maxY - decay*1;
+        exY = maxY - decay*nSteps;
         Assertions.assertEquals(exY, y, DELTA,"MathUtil decayStepFn failed");
         //
         count = 301;
+        nSteps = count / step;
         y = MathUtil.decayStepFn(minY, maxY, decay, step, count);
-        exY = maxY - decay*1;
+        exY = maxY - decay*nSteps;
         Assertions.assertEquals(exY, y, DELTA,"MathUtil decayStepFn failed");
         //
         count = 601;
+        nSteps = count / step;
         y = MathUtil.decayStepFn(minY, maxY, decay, step, count);
-        exY = maxY - decay*3;
+        exY = maxY - decay*nSteps;
         Assertions.assertEquals(exY, y, DELTA,"MathUtil decayStepFn failed");
 
         //
         count = 1001;
+        nSteps = count / step;
         y = MathUtil.decayStepFn(minY, maxY, decay, step, count);
-        exY = maxY - decay*5;
+        exY = maxY - decay*nSteps;
         Assertions.assertEquals(exY, y, DELTA,"MathUtil decayStepFn failed");
 
     }

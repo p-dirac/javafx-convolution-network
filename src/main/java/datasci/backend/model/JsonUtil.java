@@ -103,7 +103,7 @@ public class JsonUtil {
             ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
             //  objectMapper.writerWithDefaultPrettyPrinter().writeValue(out, config);
             boolean b = objectMapper.canSerialize(FitParams.class);
-            LOG.log(Level.INFO, "Can serialize NetConfig? " + b);
+            LOG.log(Level.INFO, "Can serialize FitParams? " + b);
             objectMapper.writeValue(out, fitParams);
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);

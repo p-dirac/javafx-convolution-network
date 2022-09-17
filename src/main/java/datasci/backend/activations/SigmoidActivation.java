@@ -5,8 +5,13 @@ import datasci.backend.model.Matrix;
 public class SigmoidActivation implements ActivationI {
 
     private Matrix dYdZ;
+    private String actName = ActE.SIGMOID.label;
     public SigmoidActivation() {
 
+    }
+
+    public String getActName() {
+        return actName;
     }
 
     /**

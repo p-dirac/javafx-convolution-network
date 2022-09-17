@@ -19,14 +19,15 @@ package datasci.frontend.ctrl;
 import datasci.backend.control.ConvoNetI;
 import datasci.backend.control.ConvoNetTest;
 import datasci.backend.control.ConvoNetTrain;
-import datasci.backend.model.Evaluation;
+import datasci.backend.model.EvaluationR;
 import datasci.backend.model.NetConfig;
 import datasci.backend.model.NetResult;
 import datasci.backend.model.FitParams;
-import datasci.frontend.util.SciFmtR;
 import javafx.concurrent.Task;
 
 import java.text.DecimalFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -113,6 +114,11 @@ public class NetTask extends Task<TaskResult> {
         try {
             String status = null;
             result.netResult = new NetResult();
+            FitParamsCache fitParamsCache = FitParamsCache.getInstance();
+            FitParams fitParams = fitParamsCache.getFitParams();
+            if(fitParams != null){
+                result.netResult.fitParams = fitParams;
+            }
             if (TRAIN_NET.equalsIgnoreCase(netOption)) {
                 // training network
                 net = new ConvoNetTrain(result.netResult, config);
@@ -131,7 +137,10 @@ public class NetTask extends Task<TaskResult> {
                 // reset sub sample counts
                 subsetCompleted = 0;
                 subsetCorrect = 0;
-                // loop over multiple batchSize upt to subsetSize
+                Instant start = Instant.now();
+                //
+            //    net.setDoNow(true);
+                // loop over multiple batchSize up to subsetSize
                 for (int subSamples = 0; subSamples < subsetSize; subSamples += batchSize) {
                     LOG.fine("subSamples: " + subSamples);
                     //    LOG.info("isCancelled: " + isCancelled());
@@ -140,12 +149,16 @@ public class NetTask extends Task<TaskResult> {
                         LOG.info("task cancelled after " + samples + " samples");
                         break;
                     }
+
                     //
                     // continue training the network for batchSize samples
                     net.fitBatch();
                     //
+                    net.setDoNow(false);
+
+                    //
                     // evaluate after each batch
-                    Evaluation eval = net.evaluate();
+                    EvaluationR eval = net.evaluate();
                     //
                     int sampleCompleted = eval.sampleCount();
                     int sampleCorrect = eval.numCorrect();
@@ -160,6 +173,8 @@ public class NetTask extends Task<TaskResult> {
                     subsetCorrect += eval.batchNumCorrect();
                 }
                 //
+                net.setDoNow(false);
+                //
                 // after each subsetSize, update results
                 //
                 status = net.getStatus();
@@ -168,7 +183,7 @@ public class NetTask extends Task<TaskResult> {
                 LOG.info("status: " + status);
                 //
                 // evaluate after each subset
-                Evaluation eval = net.evaluate();
+                EvaluationR eval = net.evaluate();
                 int sampleCompleted = eval.sampleCount();
                 int sampleCorrect = eval.numCorrect();
                 // update result
@@ -192,12 +207,16 @@ public class NetTask extends Task<TaskResult> {
                 LOG.info("accuracy: " + accuracy);
                 //
                 // Task has properties such as: message, progress
-                updateMessage("Overall Accuracy: " + accuracy + ",   Subset % Correct: " + subsetAccuracy);
+                updateMessage("Overall Accuracy: " + accuracy + " %,    Subset Accuracy: " + subsetAccuracy + " %");
                 LOG.info("sampleCorrect: " + sampleCorrect);
                 LOG.info("sampleCompleted: " + sampleCompleted);
                 //
                 // update progress last, since it will trigger listener
                 updateProgress(sampleCompleted, totalSamples);
+                // time passes
+                Instant end = Instant.now();
+                Duration timeElapsed = Duration.between(start, end);
+                LOG.info("subset timeElapsed (sec): " + timeElapsed.toSeconds());
             }
             //
             if (!isCancelled()) {

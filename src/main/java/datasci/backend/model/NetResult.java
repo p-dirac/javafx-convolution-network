@@ -17,6 +17,9 @@ public class NetResult {
     public int batchSamplesCompleted;
     public int batchSamplesCorrect;
     //
+    public long convoTime;
+    //
+
     /**
      * Network training FitParams, including weights and biases for all layers
      * Note: does not include any back prop parameters

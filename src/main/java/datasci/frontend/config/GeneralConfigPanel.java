@@ -2,12 +2,9 @@ package datasci.frontend.config;
 
 import datasci.backend.model.GeneralConfig;
 import datasci.frontend.util.Cert;
-import datasci.frontend.util.EtaModel;
-import javafx.scene.Group;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
@@ -31,13 +28,7 @@ public class GeneralConfigPanel {
     //
     private final TextField totalTrainField = new TextField();
     private final TextField totalTestField = new TextField();
-    private final TextField batchField = new TextField();
-    // gradient descent rate table
-    private final GradientRatePanel ratePanel = new GradientRatePanel();
-    // lambda: L2 regularization parameter
-    private final TextField lambdaField = new TextField();
-    // mu:  momentum parameter
-    private final TextField muField = new TextField();
+
 
     /**
      * Instantiates a new General config panel.
@@ -81,30 +72,6 @@ public class GeneralConfigPanel {
             grid.add(labelTotalTest, 0, ++row);
             grid.add(totalTestField, 1, row);
             Cert.checkIntField(totalTestField);
-            //
-            Label labelBatch = new Label("Batch Size:");
-            // grid cell index: col, row
-            grid.add(labelBatch, 0, ++row);
-            grid.add(batchField, 1, row);
-            Cert.checkIntField(batchField);
-            //
-            Label labelRate = new Label("Gradient descent rate:");
-            Group gRate = createRatePanel();
-            // grid cell index: col, row
-            grid.add(labelRate, 0, ++row);
-            grid.add(gRate, 1, row);
-            //
-            Label labelLambda = new Label("L2 Regularization parameter:");
-            // grid cell index: col, row
-            grid.add(labelLambda, 0, ++row);
-            grid.add(lambdaField, 1, row);
-            Cert.checkDblField(lambdaField);
-            //
-            Label labelMu = new Label("Momentum parameter:");
-            // grid cell index: col, row
-            grid.add(labelMu, 0, ++row);
-            grid.add(muField, 1, row);
-            Cert.checkDblField(muField);
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
@@ -112,33 +79,14 @@ public class GeneralConfigPanel {
         return grid;
     }
 
-    /**
-     * Init gradient descent rate panel.
-     */
-    public Group createRatePanel() {
-        // Advantage of Group: it cannot be resized
-        Group g = new Group();
-        try {
-            Pane p = ratePanel.init();
-            g.getChildren().add(p);
-        } catch (Exception ex) {
-            LOG.log(Level.SEVERE, ex.getMessage(), ex);
-            throw new RuntimeException(ex);
-        }
-        return g;
-    }
-
     private boolean validateNumberFields() {
         boolean isOk = false;
         try {
             AtomicBoolean isValid1 = Cert.validateIntField(totalTrainField);
             AtomicBoolean isValid2 = Cert.validateIntField(totalTestField);
-            AtomicBoolean isValid3 = Cert.validateIntField(batchField);
-            AtomicBoolean isValid4 = Cert.validateDoubleField(lambdaField);
-            AtomicBoolean isValid5 = Cert.validateDoubleField(muField);
 
             // check if all fields are valid
-            if (isValid1.get() && isValid2.get() && isValid3.get() && isValid4.get() && isValid5.get()) {
+            if (isValid1.get() && isValid2.get() ) {
                 isOk = true;
             }
         } catch (Exception ex) {
@@ -161,13 +109,10 @@ public class GeneralConfigPanel {
             //
             // allow zero to edit later ?
             generalConfig.totalTrainingSamples = 0;
-            generalConfig.batchSize = 0;
+
             if (validateNumberFields()) {
                 generalConfig.totalTrainingSamples = Integer.parseInt(totalTrainField.getText());
                 generalConfig.totalTestingSamples = Integer.parseInt(totalTestField.getText());
-                generalConfig.batchSize = Integer.parseInt(batchField.getText());
-                generalConfig.lambda = Double.parseDouble(lambdaField.getText());
-                generalConfig.mu = Double.parseDouble(muField.getText());
             } else{
                     Alert alert = new Alert(Alert.AlertType.ERROR,
                             "Fix error in General params",
@@ -177,8 +122,6 @@ public class GeneralConfigPanel {
                         // do nothing
                     }
             }
-            //
-            generalConfig.rateModel = ratePanel.getRateModel();
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
@@ -198,12 +141,7 @@ public class GeneralConfigPanel {
             //
             totalTrainField.setText(Integer.toString(generalConfig.totalTrainingSamples));
             totalTestField.setText(Integer.toString(generalConfig.totalTestingSamples));
-            batchField.setText(Integer.toString(generalConfig.batchSize));
-            //
-            ratePanel.setRateModel(generalConfig.rateModel);
-            //
-            lambdaField.setText(SIZE_FMT.format(generalConfig.lambda));
-            muField.setText(SIZE_FMT.format(generalConfig.mu));
+
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
