@@ -26,6 +26,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 import java.io.InputStream;
+import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -47,6 +48,7 @@ import java.util.logging.Logger;
  */
 public class FxConvoMain extends Application {
     private static Logger LOG = Logger.getLogger(FxConvoMain.class.getName());
+    private static final Logger FRONTEND_LOGGER = Logger.getLogger("datasci.frontend");
 
     public static final String APP_TITLE = "Convolution Network for Image Classification";
     private final BorderPane scenePanel = new BorderPane();
@@ -85,11 +87,8 @@ public class FxConvoMain extends Application {
     public void initLogging() {
         try {
             System.out.println("initLogging");
-            //   System.setProperty("java.util.logging.config.file", ".\\resources\\clientlog.properties");
-            //   System.out.println("initLogging prop: " + logmgr.getProperty("java.util.logging.config.file"));
             String logPropFile = "clientlog.properties";
             InputStream fis = getClass().getClassLoader().getResourceAsStream(logPropFile);
-          //  FileInputStream fis = new FileInputStream(logPropFile);
             if (fis != null) {
                 LogManager logmgr = LogManager.getLogManager();
                 logmgr.readConfiguration(fis);
@@ -106,6 +105,7 @@ public class FxConvoMain extends Application {
 
     private void initComponents(Stage stage) {
         try {
+            LOG.log(Level.FINE, "FINE: initComponents");
             //
             AppTabs tabs = new AppTabs();
             tabs.initPanel(rootPanel);

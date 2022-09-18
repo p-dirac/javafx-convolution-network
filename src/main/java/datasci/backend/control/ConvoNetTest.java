@@ -211,7 +211,6 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
             }
             // concatenate poolOut matrix list to a single matrix for the internal layer
             internalIn = MTX.listToSingleCol(poolOut);
-            LOG.fine("internalIn : " + internalIn);
             //
             for (InternalLayer internal : internalLayers) {
                 internalOut = internal.testForward(internalIn);
@@ -279,7 +278,6 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
      */
     public void fit() {
         try {
-            LOG.fine("runNet");
             //testing forward propagation
             int totalSamples = config.generalConfig.totalTestingSamples;
             batchSampleBase = 0;
@@ -298,14 +296,12 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
      */
     public void fitBatch() {
         try {
-            LOG.fine("runNetBatch");
             //testing forward propagation
             batchSampleCount = 0;
             batchNumCorrect = 0;
             for (int i = 0; i < batchSize; i++) {
                 // next data sample
                 NetData netData = dataList.get(batchSampleBase + i);
-                LOG.fine("netData: " + netData);
                 // next sample image
                 Matrix xIn = netData.getInputData();
                 //

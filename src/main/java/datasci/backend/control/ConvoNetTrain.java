@@ -479,15 +479,14 @@ public class ConvoNetTrain extends ConvoNetBase implements ConvoNetI {
             batchSampleCount = 0;
             batchNumCorrect = 0;
             boolean batchCompleted = false;
-       //     LOG.log(Level.FINE, "FINE, sampleCount: " + sampleCount);
             if ((sampleCount + batchSize) <= totalSamples) {
                 for (int i = 0; i < batchSize; i++) {
                     // next data sample
                     NetData netData = dataList.get(batchSampleBase + i);
-               //         LOG.log(Level.INFO, " netData: " + netData);
+               //         LOG.log(Level.FINE, " netData: " + netData);
                     // next sample image
                     Matrix xIn = netData.getInputData();
-            //        LOG.log(Level.INFO, " xIn: " + xIn);
+            //        LOG.log(Level.FINE, " xIn: " + xIn);
                     //
                     // train one image sample forward through all network layers
                     trainAllLayers(xIn, doNow);
@@ -500,23 +499,19 @@ public class ConvoNetTrain extends ConvoNetBase implements ConvoNetI {
                     // matrix of actual output at given index
                     Matrix actualMatrix = actualOutList.get(actualIndedx);
                     outputLayer.setActualY(actualMatrix);
-                    LOG.fine("actualMatrix: " + actualMatrix);
                     sampleCount++;
                     batchSampleCount++;
                     if (batchSampleCount == batchSize) {
                         batchCompleted = true;
                         // last batch
                         accuracy = ((double) batchNumCorrect / batchSampleCount) * 100.0;
-                        LOG.fine("accuracy: " + accuracy);
                         // save previous accuracy
                         accuracyPrev = accuracy;
-                        LOG.fine("accuracyPrev: " + accuracyPrev);
                     }
                     // back prop batch
                     backProp(batchCompleted);
                 }
                 setStatus("Samples completed: " + sampleCount);
-                //    LOG.fine("sampleCount completed: " + sampleCount);
                 // update batchSampleBase
                 batchSampleBase += batchSize;
             }
@@ -539,7 +534,6 @@ public class ConvoNetTrain extends ConvoNetBase implements ConvoNetI {
             // add x input to poolOut
             // input to ConvoLayer may be xIn or poolOut
             poolOut.add(xIn);
-            LOG.fine("poolOut : " + poolOut);
             //
             List<Matrix> convoOut = null;
             Matrix internalIn = null;
@@ -551,28 +545,23 @@ public class ConvoNetTrain extends ConvoNetBase implements ConvoNetI {
                 convoLayer.setDoNow(doNow);
                 // input to ConvoLayer may be xIn or poolOut
                 convoOut = convoLayer.trainForward(poolOut);
-             //   LOG.fine("convoOut : " + convoOut);
                 //
                 PoolLayer poolLayer = convoPool.poolLayer;
                 poolOut = poolLayer.trainForward(convoOut);
-            //    LOG.fine("poolOut : " + poolOut);
             }
             // time passes
             Instant endConvo = Instant.now();
             Duration timeElapsed = Duration.between(startConvo, endConvo);
             convoTime += timeElapsed.toSeconds();
 
-            //  LOG.fine("convoOut size : " + convoOut.size() + ", convoOut 0: " + convoOut.get(0));
             // concatenate poolOut matrix list to a single matrix for the internal layer
             internalIn = MTX.listToSingleCol(poolOut);
-         //   LOG.fine("internalIn : " + internalIn);
             // in case there is no InternalLayer, init internalOut
             internalOut = internalIn;
             //
             for (InternalLayer internalLayer : internalLayers) {
                 internalLayer.setDoNow(doNow);
                 internalOut = internalLayer.trainForward(internalIn);
-                LOG.fine("internalOut : " + internalOut);
                 internalIn = internalOut;
             }
      //       internalOut.checkNaN("internalOut");
@@ -618,8 +607,6 @@ public class ConvoNetTrain extends ConvoNetBase implements ConvoNetI {
             // dLdZ : batch loss function
             Matrix dLdZ = outputLayer.lossFn();
             Matrix dLdXOutput = outputLayer.backProp(dLdZ, batchCompleted);
-        //    LOG.fine("loss dLdZ: " + dLdZ);
-        //    LOG.fine("out backprop, dLdXOutput: " + dLdXOutput);
             //
             Matrix dLdXInternal = dLdXOutput;
             //
@@ -629,23 +616,19 @@ public class ConvoNetTrain extends ConvoNetBase implements ConvoNetI {
                         = internalLayers.listIterator(internalLayers.size());
                 while (internalIter.hasPrevious()) {
                     internalLayer = internalIter.previous();
-                    LOG.fine("internal layer");
                     internalLayer.setEta(eta);
                     internalLayer.setLambda(lambda);
                     internalLayer.setMu(mu);
                     dLdXInternal = internalLayer.backProp(dLdXInternal, batchCompleted);
                 }
             }
-       //     LOG.fine("dLdXInternal: " + dLdXInternal);
             //
             // get
             if (convoPoolLayers.size() > 0) {
                 ConvoPoolLayer convoPool = convoPoolLayers.get(convoPoolLayers.size() - 1);
                 PoolLayer poolLayer = convoPool.poolLayer;
                 // dLdX actually consists of one matrix for each filter
-            //    LOG.fine("poolLayer outListSize: " + poolLayer.getoutListSize());
                 List<Matrix> dLdXList = MTX.splitMatrix(dLdXInternal, poolLayer.getoutListSize());
-           //     LOG.fine("dLdXList size: " + dLdXList.size());
                 //
                 // backprop traverses layers in reverse order
                 ListIterator<ConvoPoolLayer> convoPoolIter
@@ -653,19 +636,14 @@ public class ConvoNetTrain extends ConvoNetBase implements ConvoNetI {
                 while (convoPoolIter.hasPrevious()) {
                     convoPool = convoPoolIter.previous();
                     //
-              //      LOG.fine("pool layer");
                     poolLayer = convoPool.poolLayer;
-             //       LOG.fine("inside convo pool loop dLdXList size: " + dLdXList.size());
                     List<Matrix> dLdXPool = poolLayer.backProp(dLdXList);
-             //       LOG.fine("inside convo pool loop dLdXPool size: " + dLdXPool.size());
                     //
-             //       LOG.fine("convolution layer");
                     ConvoLayer convoLayer = convoPool.convoLayer;
                     convoLayer.setEta(eta);
                     convoLayer.setLambda(lambda);
                     convoLayer.setMu(mu);
                     List<Matrix> dLdXConvo = convoLayer.backProp(dLdXPool, batchCompleted);
-             //       LOG.fine("inside convo pool loop dLdXConvo size: " + dLdXConvo.size());
                     // reset poolLayer backprop input
                     dLdXList = dLdXConvo;
                 }

@@ -390,7 +390,7 @@ public class ConvoLayer {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
         }
-        LOG.fine("outList size: " + outList.size());
+       // LOG.fine("outList size: " + outList.size());
         return outList;
     }
 
@@ -403,7 +403,6 @@ public class ConvoLayer {
      */
     public List<Matrix> testForward(List<Matrix> inList) {
         this.inList = inList;
-        LOG.fine("trainForward");
         List<Matrix> outList = new ArrayList<>();
         try {
             // convolve matrix x with each filter w in filterList to create matrix z
@@ -417,6 +416,15 @@ public class ConvoLayer {
             Matrix x = inList.get(0);
             int zrows = x.rows - filterSize + 1;
             int zcols = x.cols - filterSize + 1;
+            // initialize the unfolded x
+            unfoldList = new ArrayList<>();
+            for (int i = 0; i < nIn; i++) {
+                x = inList.get(i);
+                // matrix xu size: # rows = zrows * zcols, # cols = filterSize * filterSize
+                Matrix xu = MTX.unfold(x, filterSize, filterSize);
+                unfoldList.add(xu);
+            }
+
             //
             // outList size = nOut
             for (int k = 0; k < nOut; k++) {
@@ -458,7 +466,6 @@ public class ConvoLayer {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
         }
-        LOG.fine("outList size: " + outList.size());
         return outList;
     }
 
@@ -559,8 +566,8 @@ public class ConvoLayer {
                     // dLdZ size: #rows = nOut, 1 col,
                     // matrix xu size: # rows = filterSize * filterSize,  # cols = zrows * zcols
                     // dLdZ : output feature map size
-                    //  dLdZ  rows: x.rows - filterSize + 1;
-                    //  dLdZ  cols: x.cols - filterSize + 1;
+                    //  dLdZ  zrows: x.rows - filterSize + 1;
+                    //  dLdZ  zcols: x.cols - filterSize + 1;
                     // dLdW size: filterSize * filterSize  rows, 1 col
                     Matrix dLdW = MTX.mult(xuFordLdZ, dLdZ);
                     //
@@ -569,8 +576,6 @@ public class ConvoLayer {
                     dLdW.cols = filterSize;
                     dLdW.size = dLdW.rows * dLdW.cols;
                     dLdWRow.add(dLdW);
-                //    MTX.logNotZero("ConvoLayer ID: " + layerID + ", batchCount: " + batchCount + " dLdW: ", dLdW);
-
                     //
                     // append convolution matrix dLdX to dLdX list
                     dLdXList.add(dLdX);
@@ -579,10 +584,8 @@ public class ConvoLayer {
                 // dldW for each filter, total of nOut*nIn filters
                 // dLdWList contains nOut*nIn dLdW matrices
                 dLdWList.add(dLdWRow);
-
-                //     LOG.log(Level.INFO, "ConvoLayer ID: " + layerID + "batchCount: " + batchCount);
-                //     LOG.log(Level.INFO, "dLdWRow: " + dLdWRow);
-
+                //     LOG.log(Level.FINE, "ConvoLayer ID: " + layerID + "batchCount: " + batchCount);
+                //     LOG.log(Level.FINE, "dLdWRow: " + dLdWRow);
             }// end nOut loop
 
             //

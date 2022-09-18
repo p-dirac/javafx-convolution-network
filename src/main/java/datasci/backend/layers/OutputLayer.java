@@ -289,8 +289,8 @@ public class OutputLayer {
         Matrix dLdZ = null;
         try {
             //
-            LOG.fine("output layer");
-            LOG.fine("actualMatrix: " + MathUtil.arraytoString(actualY.a));
+        //    LOG.fine("output layer");
+        //    LOG.fine("actualMatrix: " + MathUtil.arraytoString(actualY.a));
             if (actFn.getActName().equalsIgnoreCase(ActE.SOFTMAX.label)) {
                 // predicted y = softmax[k]
                 // column matrix loss, dLdZ[k] = predicted y[k] -  actual y[k]
@@ -307,7 +307,7 @@ public class OutputLayer {
             //
             // Note: all y values are always positive (0 to 1) due to softmax function
             //
-            LOG.fine("dLdZ: " + MathUtil.arraytoString(dLdZ.a));
+         //   LOG.fine("dLdZ: " + MathUtil.arraytoString(dLdZ.a));
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
@@ -359,7 +359,7 @@ public class OutputLayer {
             //
             // dLdX col vector will become the backProp dLdY col vector for the previous layer
             //
-            LOG.fine("dLdX : " + dLdX);
+         //   LOG.fine("dLdX : " + dLdX);
             //
             // complete dLdX calculations before updating mW and bias
             //
@@ -376,7 +376,6 @@ public class OutputLayer {
                 MathUtil.updateWeightMatrix(dLdW, eta, w, v, mu, oneMinusLambda);
                 //
                 // update bias matrix
-                LOG.fine("bias b: " + b);
                 // bias(n, 1) = bias(n, 1) + db(n, 1)
                 dB = MTX.listAverage(batchBias);
                 MTX.addInplace(b, dB);
@@ -406,40 +405,10 @@ public class OutputLayer {
         if (predictedIndex == actualIndex) {
             result = true;
         }
-        LOG.fine(" result: " + result + ", actualIndex: " + actualIndex + ", predictedIndex: " + predictedIndex);
+     //   LOG.fine(" result: " + result + ", actualIndex: " + actualIndex + ", predictedIndex: " + predictedIndex);
         return result;
     }
 
-    /**
-     Check if predicted output value is correct
-
-     @param actualIndex true index
-     @return true if predicted output index is correct
-     */
-    public boolean isCorrect_old(int actualIndex) {
-        boolean result = false;
-        // output layer array y.a contains predictions for each class
-        // maximum value used to check for correct class
-        double max = Arrays.stream(y.a).max().getAsDouble();
-        //
-        // Note: all y values are always positive (0 to 1) due to softmax function
-        //
-        //   LOG.info("predicted matrix y");
-        //    MTX.logMatrx(y, 10);
-        // use actualIndex as row index to predicted value
-        // if predicted value is correct, it should equal max value
-        double predicted = y.a[actualIndex];
-        int predictedIndex = getPredictedIndex();
-        // the correct predicted value should equal max
-        // correct predicted value (0 to 1)
-        // use MAX_TOL for rounding errors
-        if ((Math.abs(predicted - max) < MAX_TOL)) {
-            result = true;
-        }
-        LOG.fine("actualIndex: " + actualIndex + ", predictedIndex: " + predictedIndex);
-        LOG.fine(" result: " + result + ", max: " + max + ", predicted: " + predicted);
-        return result;
-    }
 
     /**
      In predicted y array find index of predicted value (i.e. maximum value)

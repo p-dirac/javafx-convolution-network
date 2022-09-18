@@ -1,3 +1,6 @@
-# Sample Template Project
+# JavaFx Convolutional Network
+This project demonstrates the implementation of a JavaFx front end and a convolutional network back end.
+The front end interface allows the user to create various network scenarios without modifying the code.
+The back end code includes network layers, activation functions, a matrix library, and json utilities. 
 
-Use this as a minimal starting point for your own projects.
+See JavaFX-Convolutional-Network.docx for more information.

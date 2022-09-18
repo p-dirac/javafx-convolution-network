@@ -319,7 +319,6 @@ public class InternalLayer {
             Matrix dLdB = dLdZ;
             // dZdX(n,m), w(n, m)
             Matrix dZdX = w;
-            LOG.fine("dZdX : " + dZdX);
             // derivative of layer output cost with respect to layer input
             // dLdX(1, m) = dLdZ(1,n) * dZdX(n,m)
             Matrix dLdZrow = MTX.colToRow(dLdZ);
@@ -335,7 +334,6 @@ public class InternalLayer {
             // dLdY(n, 1) ** dYdZ(n,1) was done above
             // dLdW(n, m) = dLdZ(n,1) * dZdW(1,m)
             Matrix dLdW = MTX.mult(dLdZ, dZdW);
-            LOG.fine("dLdW : " + dLdW);
             // db(n, 1) = dLdB(n,1)*eta
             Matrix dB = MTX.mulConstant(dLdB, -eta);
             //
@@ -347,7 +345,6 @@ public class InternalLayer {
                 MathUtil.updateWeightMatrix(dLdW, eta, w, v, mu, oneMinusLambda);
                 //
                 // update bias matrix
-                LOG.fine("bias b: " + b);
                 // bias(n, 1) = bias(n, 1) + db(n, 1)
                 dB = MTX.listAverage(batchBias);
                 MTX.addInplace(b, dB);

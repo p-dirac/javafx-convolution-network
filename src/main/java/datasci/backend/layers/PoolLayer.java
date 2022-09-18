@@ -129,7 +129,6 @@ public class PoolLayer {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
         }
-     //   LOG.fine("outList size: " + outList.size());
         return outList;
     }
 
@@ -171,11 +170,10 @@ public class PoolLayer {
             // pool input matrix, firstIn(nf, nf), where nf = n - f + 1, n = image size, f = filter size
             Matrix firstIn = inList.get(0);
             int nf = firstIn.rows;
-            LOG.fine("firstIn : " + firstIn);
+       //     LOG.fine("firstIn : " + firstIn);
             //
             int numFilters = outList.size();
             // dLdY actually consists of multiple matrix, one for each filter
-            LOG.fine("dLdYList size: " + dLdYList.size() + ", numFilters: " + numFilters);
             // backNum: number of matrix in index list
             int indexListSize = indexList.size();
             //
@@ -187,17 +185,15 @@ public class PoolLayer {
                 Matrix dLdYOne = dLdYList.get(b);
                 // poolIndex(nfp, nfp) same size as pool output matrix
                 Matrix poolIndex = indexList.get(b);
-                LOG.fine("dLdX : " + dLdX);
-                LOG.fine("dLdYOne : " + dLdYOne);
-                LOG.fine("poolIndex : " + poolIndex);
+           //     LOG.fine("dLdX : " + dLdX);
+           //     LOG.fine("dLdYOne : " + dLdYOne);
+           //     LOG.fine("poolIndex : " + poolIndex);
                 // size of one pool index matrix
                 int poolIndexSize = poolIndex.size;
-                LOG.fine("indexListSize: " + indexListSize + ", poolIndexSize: " + poolIndexSize);
                 //
                 for (int bk = 0; bk < poolIndexSize; bk++) {
                     // dLdX cell index for back prop
                     int cellK = (int) poolIndex.a[bk];
-                    LOG.fine("bk: " + bk + ", cellK: " + cellK);
                     // get dLdY value to back propagate
                     double cellVal = dLdYOne.a[bk];
                     //    LOG.fine("backProp, bk: " + bk + ", cellK: " + cellK + ", cellVal: " + cellVal);
@@ -209,7 +205,6 @@ public class PoolLayer {
                 //
                 dLdXList.add(dLdX);
             }
-            LOG.fine("dLdXList size : " + dLdXList.size());
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);

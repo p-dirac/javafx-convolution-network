@@ -424,7 +424,6 @@ public class MTX {
         //   LOG.info("subRows: " + subRows + ", subCols: " + subCols);
         Matrix subMatrix = new Matrix(subRows, subCols);
         try {
-            //    LOG.fine("matrix a len: " + a.length + ", sub size: " + subMatrix.size);
             // copy cols from a matrix row to rows of subMatrix
             int subI = 0;
             int subJ = 0;
@@ -671,7 +670,6 @@ public class MTX {
             int crows = m.rows;
             // ccols = number of cols in matrix c
             int ccols = bcols;
-            //    LOG.fine("mult, bcols: " + bcols + ", crows: " + crows + ", ccols: " + ccols + ", cols: " + cols);
             prodMatrix = new Matrix(crows, ccols);
             for (int i = 0; i < m.rows; i++) {
                 // i = row # in this matrix a
@@ -1358,10 +1356,6 @@ public class MTX {
             int rowEnd = rowStart + f.rows;
             int colStart = 0;
             int colEnd = colStart + f.cols;
-            //     LOG.fine("convolve, f" + f);
-            //     LOG.fine("convolve, rowStart: " + rowStart + ", rowEnd: " + rowEnd);
-            //     LOG.fine("convolve, colStart: " + colStart + ", colEnd: " + colEnd);
-            //     LOG.fine("convolve, crows: " + crows + ", ccols: " + ccols);
             for (int i = 0; i < crows; i++) {
                 // i = row # in this matrix c
                 for (int j = 0; j < ccols; j++) {
@@ -1418,10 +1412,6 @@ public class MTX {
             int rowEnd = rowStart + frows;
             int colStart = 0;
             int colEnd = colStart + fcols;
-            //     LOG.fine("convolve, f" + f);
-            //     LOG.fine("convolve, rowStart: " + rowStart + ", rowEnd: " + rowEnd);
-            //     LOG.fine("convolve, colStart: " + colStart + ", colEnd: " + colEnd);
-            //     LOG.fine("convolve, crows: " + crows + ", ccols: " + ccols);
             for (int i = 0; i < crows; i++) {
                 // i = row # in this matrix c
                 for (int j = 0; j < ccols; j++) {
@@ -1466,7 +1456,6 @@ public class MTX {
             padCopy = new Matrix(prows, pcols);
             int subRowI = 0;
             int subColJ = 0;
-            LOG.fine("padCopy : " + padCopy);
             // add padding zero cells to matrix padCopy
             // in rows containing this sub matrix
             for (int i = padSize; i < padSize + m.rows; i++) {
@@ -1474,7 +1463,6 @@ public class MTX {
                 subColJ = 0;
                 for (int j = padSize; j < padSize + m.cols; j++) {
                     // j = col # in matrix padCopy
-                    LOG.finer("i : " + i + ", j: " + j + ",subRowI: " + subRowI + ", subColJ: " + subColJ);
                     // copy cell from sub matrix to padCopy
                     padCopy.a[i * pcols + j] = m.a[subRowI * m.cols + subColJ];
                     subColJ++;
@@ -1573,7 +1561,6 @@ public class MTX {
                 for (int j = 0; j < m.cols; j = j + poolCols) {
                     int colStart = j;
                     int colEnd = colStart + poolCols;
-                    LOG.fine("i: " + i + ", j: " + j);
                     // j = col # in matrix C
                     // get sub-matrix of matrix m with size poolRows x poolCols
                     Matrix subM = subMatrix(m, rowStart, rowEnd, colStart, colEnd);
@@ -1585,12 +1572,10 @@ public class MTX {
 
                     // index relative to subM
                     IndexIJ subIJ = kToIJ(subM.cols, subK);
-                    LOG.fine(", subK: " + subK + ", IJ.i: " + subIJ.i() + ", IJ.j: " + subIJ.j());
                     // find index of max cell in matrix m = ref pt in m + rel index in subM
                     int maxI = rowStart + subIJ.i();
                     int maxJ = colStart + subIJ.j();
                     int maxK = maxI * m.cols + maxJ;
-                    LOG.fine("maxI: " + maxI + ", maxJ: " + maxJ + ", maxK: " + maxK);
                     // save max index
                     setCell(indexMatrix, h, k, maxK);
                     //

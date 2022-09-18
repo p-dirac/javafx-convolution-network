@@ -120,6 +120,7 @@ public class ConvoNetBase {
 
 
     private static final Logger LOG = Logger.getLogger(ConvoNetBase.class.getName());
+    private static final Logger BACKEND_LOGGER = Logger.getLogger("datasci.backend");
 
     //
     // number of data classes (labels): e.g. 10 for 0 to 9 digits classification
