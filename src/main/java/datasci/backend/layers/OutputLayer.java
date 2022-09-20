@@ -218,6 +218,7 @@ public class OutputLayer {
 
     public void setW(Matrix w) {
         this.w = w;
+        initVelocity();
     }
 
     public void setB(Matrix b) {

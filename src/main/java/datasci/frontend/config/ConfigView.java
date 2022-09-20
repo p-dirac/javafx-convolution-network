@@ -19,6 +19,7 @@ package datasci.frontend.config;
 import datasci.backend.model.ConvoConfig;
 import datasci.backend.model.ConvoPoolConfig;
 import datasci.backend.model.FileUtil;
+import datasci.backend.model.FitParams;
 import datasci.backend.model.GeneralConfig;
 import datasci.backend.model.BackPropConfig;
 import datasci.backend.model.InputConfig;
@@ -29,6 +30,7 @@ import datasci.backend.model.NetResult;
 import datasci.backend.model.OutputConfig;
 import datasci.backend.model.PoolConfig;
 import datasci.frontend.ctrl.ConfigCache;
+import datasci.frontend.ctrl.FitParamsCache;
 import datasci.frontend.util.ViewUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -244,7 +246,7 @@ public class ConfigView {
             ViewUtil.compact(grid);
             allPane.getChildren().add(grid);
             //
-            Button saveBtn = new Button("Save configuration");
+            Button saveBtn = new Button("Save Changes");
             Button cancelBtn = new Button("Cancel");
             //
             saveBtn.setOnAction(new EventHandler<ActionEvent>() {
@@ -756,6 +758,7 @@ public class ConfigView {
             if (file != null) {
                 InputStream src = FileUtil.getInputStream(file);
                 netConfig = JsonUtil.jsonToConfig(src);
+                ConfigCache.getInstance().setConfig(netConfig);
                 configFileName = file.getName();
                 LOG.log(Level.INFO, "Import Config file: " + configFileName);
                 //
@@ -783,5 +786,56 @@ public class ConfigView {
         }
     }
 
+    public void importFitParams() {
+        try {
+            File file = ViewUtil.openFileDialog("Import Training FitParams");
+            if (file != null) {
+                InputStream src = FileUtil.getInputStream(file);
+                FitParams fitParams = JsonUtil.jsonToFitParams(src);
+                if(fitParams != null) {
+                    FitParamsCache fitParamsCache = FitParamsCache.getInstance();
+                    fitParamsCache.setFitParams(fitParams);
+                } else{
+                    Alert alert = new Alert(Alert.AlertType.ERROR,
+                            "FitParams could not be imported",
+                            ButtonType.OK);
+                    Optional<ButtonType> result = alert.showAndWait();
+                    if (result.isPresent() && result.get() == ButtonType.OK) {
+                        // do nothing
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            LOG.log(Level.SEVERE, ex.getMessage(), ex);
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void exportFitParams() {
+        try {
+            LOG.log(Level.INFO, "Export FitParams");
+            FitParamsCache fitParamsCache = FitParamsCache.getInstance();
+            FitParams fitParams = fitParamsCache.getFitParams();
+            if(fitParams != null) {
+                File file = ViewUtil.openCreateFileDialog("Export Training FitParams");
+                if (file != null) {
+                    //
+                    OutputStream fos = FileUtil.getOutputStream(file);
+                    JsonUtil.FitParamsToJson(fitParams, fos);
+                }
+            } else {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION,
+                        "FitParams not available for export",
+                        ButtonType.OK);
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK) {
+                    // do nothing
+                }
+            }
+        } catch (Exception ex) {
+            LOG.log(Level.SEVERE, ex.getMessage(), ex);
+            throw new RuntimeException(ex);
+        }
+    }
 
 }  //end class

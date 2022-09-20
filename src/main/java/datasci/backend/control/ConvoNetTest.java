@@ -125,6 +125,7 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
             configureNet(config);
             prepAll();
             if(netResult.fitParams != null){
+                LOG.info("setting fitParams");
                 setFitParams(netResult.fitParams);
             } else {
                 String msg = "Model fitParams must be set for test run";

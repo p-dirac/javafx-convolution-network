@@ -422,6 +422,7 @@ public class ConvoNetBase {
             for (int i = 0; i < convoPoolSize; i++) {
                 ConvoPoolLayer convoPool = convoPoolLayers.get(i);
                 ConvoPoolFitParams convoPoolFitParams = convoPoolList.get(i);
+                // setFilterList also calls initMomentumList (required for back prop)
                 convoPool.convoLayer.setFilterList(convoPoolFitParams.filterList);
                 convoPool.convoLayer.setBias(convoPoolFitParams.bias);
             }
@@ -432,11 +433,13 @@ public class ConvoNetBase {
                 InternalLayer internal = internalLayers.get(k);
                 InternalFitParams internalFitParams = internalList.get(k);
                 internal.setW(internalFitParams.w);
+                // setW also calls initVelocity (required for back prop)
                 internal.setB(internalFitParams.b);
             }
             //
             OutputFitParams outputFitParams = fitParams.outputFitParams;
             outputLayer.setW(outputFitParams.w);
+            // setW also calls initVelocity (required for back prop)
             outputLayer.setB(outputFitParams.b);
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);

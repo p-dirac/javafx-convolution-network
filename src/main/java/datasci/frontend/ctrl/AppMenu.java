@@ -18,7 +18,6 @@ package datasci.frontend.ctrl;
 
 import datasci.backend.model.NetConfig;
 import datasci.frontend.config.ConfigView;
-import datasci.frontend.config.MatrixView;
 import datasci.frontend.config.PixelView;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -68,8 +67,6 @@ public class AppMenu {
     //
     private final ConfigView configView = new ConfigView();
     //
-    private final MatrixView matrixView = new MatrixView();
-    //
     private TaskView taskTrainView;
     private TaskView taskTestView;
     //
@@ -115,8 +112,8 @@ public class AppMenu {
             Menu settingMenu = initSettingsMenu();
             menuList.add(settingMenu);
             //
-            // --- Options menu
-            Menu opMenu = initOptionMenu();
+            // --- Process menu
+            Menu opMenu = initProcessMenu();
             menuList.add(opMenu);
             //
             // --- Help menu
@@ -241,21 +238,11 @@ public class AppMenu {
                 public void handle(ActionEvent t) {
                     LOG.log(Level.INFO, "Import FitParams");
                  //   Tab tab = tabs.addOrSelectTab("Import FitParams");
-                    if (TRAIN_NET.equalsIgnoreCase(netOption)) {
-                        // training network
-                        if (taskTrainView != null) {
-                            taskTrainView.importFitParams();
-                        }
-                    } else if (TEST_NET.equalsIgnoreCase(netOption)) {
-                        // testing network
-                        if (taskTestView != null) {
-                            taskTestView.importFitParams();
-                        }
-                    }
+                            configView.importFitParams();
+                    // enable menu item, FitParams is imported
+                    exportFitParamsItem.setDisable(false);
                 }
             });
-            // disable menu item, until taskview is created
-            importFitParamsItem.setDisable(true);
             //
             exportFitParamsItem = new MenuItem("Export Training Model Fit Parameters");
             menuItemList.add(exportFitParamsItem);
@@ -265,46 +252,11 @@ public class AppMenu {
                     LOG.log(Level.INFO, "Export FitParams");
                     LOG.log(Level.INFO, "netOption: " + netOption);
                     //  Tab tab = tabs.addOrSelectTab("Export FitParams");
-                    if (TRAIN_NET.equalsIgnoreCase(netOption)) {
-                        // training network
-                        if (taskTrainView != null) {
-                            taskTrainView.exportFitParams();
-                        }
-                    }
+                            configView.exportFitParams();
                 }
             });
-            // disable menu item, until FitParams is created
+            // disable menu item, until FitParams created
             exportFitParamsItem.setDisable(true);
-/*
-            //
-            SeparatorMenuItem separator2 = new SeparatorMenuItem();
-            menuItemList.add(separator2);
-            //
-            importMatrixItem = new MenuItem("Import Matrix Model");
-            menuItemList.add(importMatrixItem);
-            importMatrixItem.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent t) {
-                    LOG.log(Level.INFO, "Import Matrix Model");
-                    Tab tab = tabs.addOrSelectTab("Import Matrix Model");
-                            matrixView.importMatrixModel();
-                }
-            });
-            // disable menu item, until taskview is created
-            importMatrixItem.setDisable(true);
-            //
-            exportMatrixItem = new MenuItem("Export Matrix Model");
-            menuItemList.add(exportMatrixItem);
-            exportMatrixItem.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent t) {
-                    LOG.log(Level.INFO, "Export Matrix Model");
-                            matrixView.exportMatrixModel();
-                }
-            });
-            // disable menu item, until FitParams is created
-            exportMatrixItem.setDisable(true);
-            */
 
             //
             settingsMenu.getItems().addAll(menuItemList);
@@ -321,7 +273,7 @@ public class AppMenu {
 
      @return options menu
      */
-    public Menu initOptionMenu() {
+    public Menu initProcessMenu() {
         // --- Menu
         Menu bMenu = new Menu("Process");
         try {
@@ -352,8 +304,6 @@ public class AppMenu {
                         netOption = TRAIN_NET;
                         taskTrainView.setNetOption(TRAIN_NET);
                         taskTrainView.initConfig(config);
-                        // FitParams may be imported, enable menu item
-                        importFitParamsItem.setDisable(false);
                         taskTrainView.initPanels();
                         taskTrainView.readyFitParamsProperty().addListener(new ChangeListener() {
                             @Override
@@ -368,7 +318,7 @@ public class AppMenu {
                         });
                     } else {
                         Alert alert = new Alert(Alert.AlertType.ERROR,
-                                "Configuration is null",
+                                "Network Configuration must be created or imported",
                                 ButtonType.OK);
                         Optional<ButtonType> result = alert.showAndWait();
                         if (result.isPresent() && result.get() == ButtonType.OK) {
@@ -406,12 +356,10 @@ public class AppMenu {
                         netOption = TEST_NET;
                         taskTestView.setNetOption(TEST_NET);
                         taskTestView.initConfig(config);
-                        // FitParams may be imported, enable menu item
-                        importFitParamsItem.setDisable(false);
                         taskTestView.initPanels();
                     } else {
                         Alert alert = new Alert(Alert.AlertType.ERROR,
-                                "Configuration must be imported",
+                                "Network Configuration must be imported",
                                 ButtonType.OK);
                         Optional<ButtonType> result = alert.showAndWait();
                         LOG.log(Level.INFO, "alert result: " + result);

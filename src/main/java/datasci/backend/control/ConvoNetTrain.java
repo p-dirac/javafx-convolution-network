@@ -285,8 +285,10 @@ public class ConvoNetTrain extends ConvoNetBase implements ConvoNetI {
             configureNet(config);
             prepAll();
             if(netResult.fitParams != null){
+                LOG.info("init network with fitParams");
                 setFitParams(netResult.fitParams);
             } else {
+                LOG.info("init network randomly");
                 initNet();
             }
         } catch (Exception ex) {

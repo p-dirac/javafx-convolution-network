@@ -17,10 +17,8 @@ public class ImagePane extends GridOne {
 
     private static final Logger LOG = Logger.getLogger(ImagePane.class.getName());
     private static final DecimalFormat fmtTwo = new DecimalFormat("0.00");
-    // normalized image pixel range minPix to maxPix
+    // normalized image pixel 0 to 1
     // see ImageDataUtil.loadImageData in back end
-    private static final double minPix = -0.5;
-    private static final double maxPix = 0.5;
     // rescaled pixel value for plot
     private static final double minPlotPix = 0.0;
     private static final double maxPlotPix = 1.0;
@@ -46,15 +44,11 @@ public class ImagePane extends GridOne {
     public void setMatrix(Matrix m) {
         try {
             LOG.info("image matrix: " + m);
-            double pixRange = maxPix - minPix;
             // rows and cols set from matrix m in constructor
             for (int i = 0; i < rows; i++) {
                 for (int j = 0; j < cols; j++) {
+                    // scale 0 to 1
                     double d = MTX.getCell(m, i, j);
-                    //rescale to minPlotPix to maxPlotPix
-                //    double p = minPlotPix + (d - minPix)*(maxPlotPix - minPlotPix)/(maxPix - minPix);
-                    // rescale 0 to 1
-                    double p = (d - minPix)/(maxPix - minPix);
                     // new pane for each cell to set background color
                     Pane pane = new Pane();
                     String s = fmtTwo.format(d);
@@ -62,12 +56,12 @@ public class ImagePane extends GridOne {
                     Label t = new Label();
                     t.setText(s);
                     pane.setStyle("-fx-background-color: white; ");
-                    if (p > 0.75) {
-                        pane.setStyle("-fx-background-color: lime; ");
-                    } else if (p > 0.5) {
+                    if (d > 0.75) {
                         pane.setStyle("-fx-background-color: yellow; ");
-                    } else if (p > 0.25) {
-                        pane.setStyle("-fx-background-color:  lemonchiffon; ");
+                    } else if (d > 0.5) {
+                        pane.setStyle("-fx-background-color: PAPAYAWHIP; ");
+                    } else if (d > 0.25) {
+                        pane.setStyle("-fx-background-color:  #F1F1F1; ");
                     } else {
                         pane.setStyle("-fx-background-color: white; ");
                         // must set something to create cell width, since zero width will not display

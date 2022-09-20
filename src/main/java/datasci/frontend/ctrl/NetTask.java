@@ -133,6 +133,11 @@ public class NetTask extends Task<TaskResult> {
             LOG.info("totalSamples: " + totalSamples + ", subsetSize: " + subsetSize + ", batchSize: " + batchSize);
             // loop over multiple subsetSize up to totalTrainingSamples
             for (int samples = 0; samples < totalSamples; samples += subsetSize) {
+                if (isCancelled()) {
+                    updateMessage("Task cancelled, isCancelled: " + isCancelled());
+                    LOG.info("task cancelled after " + samples + " samples");
+                    break;
+                }
                 LOG.info("samples: " + samples);
                 // reset sub sample counts
                 subsetCompleted = 0;
@@ -142,20 +147,17 @@ public class NetTask extends Task<TaskResult> {
             //    net.setDoNow(true);
                 // loop over multiple batchSize up to subsetSize
                 for (int subSamples = 0; subSamples < subsetSize; subSamples += batchSize) {
-                    LOG.fine("subSamples: " + subSamples);
-                    //    LOG.info("isCancelled: " + isCancelled());
                     if (isCancelled()) {
                         updateMessage("Task cancelled, isCancelled: " + isCancelled());
                         LOG.info("task cancelled after " + samples + " samples");
                         break;
                     }
-
+                    LOG.fine("subSamples: " + subSamples);
                     //
                     // continue training the network for batchSize samples
                     net.fitBatch();
                     //
                     net.setDoNow(false);
-
                     //
                     // evaluate after each batch
                     EvaluationR eval = net.evaluate();
@@ -167,7 +169,6 @@ public class NetTask extends Task<TaskResult> {
                     result.netResult.samplesCorrect = sampleCorrect;
                     result.netResult.batchSamplesCompleted = eval.batchSampleCount();
                     result.netResult.batchSamplesCorrect = eval.batchNumCorrect();
-                    //     LOG.info("batch Completed: " + eval.batchSampleCount() + ", batch Correct: " + eval.batchNumCorrect());
                     // update sub sample counts
                     subsetCompleted += eval.batchSampleCount();
                     subsetCorrect += eval.batchNumCorrect();
@@ -196,20 +197,22 @@ public class NetTask extends Task<TaskResult> {
                 //
                 // update task value before progress
                 updateValue(result);
-                // subset percent correct
-                double percentSubset = ((double) subsetCorrect / subsetCompleted) * 100.0;
+                double percentSubset = 0;
+                double percentCorrect = 0;
+                if(subsetCompleted > 0) {
+                    // subset percent correct
+                    percentSubset = ((double) subsetCorrect / subsetCompleted) * 100.0;
+                    // cumulative percent correct
+                    percentCorrect = ((double) sampleCorrect / sampleCompleted) * 100.0;
+                }
                 String subsetAccuracy = SIZE_FMT.format(percentSubset);
                 LOG.info("subsetAccuracy: " + subsetAccuracy);
-
-                // cumulative percent correct
-                double percentCorrect = ((double) sampleCorrect / sampleCompleted) * 100.0;
                 String accuracy = SIZE_FMT.format(percentCorrect);
                 LOG.info("accuracy: " + accuracy);
                 //
                 // Task has properties such as: message, progress
                 updateMessage("Overall Accuracy: " + accuracy + " %,    Subset Accuracy: " + subsetAccuracy + " %");
-                LOG.info("sampleCorrect: " + sampleCorrect);
-                LOG.info("sampleCompleted: " + sampleCompleted);
+                LOG.info("sampleCompleted: " + sampleCompleted + ", sampleCorrect: " + sampleCorrect);
                 //
                 // update progress last, since it will trigger listener
                 updateProgress(sampleCompleted, totalSamples);
@@ -237,6 +240,7 @@ public class NetTask extends Task<TaskResult> {
             FitParams soln = res.fitParams;
             if (soln == null) {
                 res.fitParams = net.createFitParams();
+                soln = res.fitParams;
             }
             // also save FitParams in cache for other panels to use
             FitParamsCache.getInstance().setFitParams(soln);

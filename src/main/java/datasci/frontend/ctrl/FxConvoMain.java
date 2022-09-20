@@ -93,7 +93,7 @@ public class FxConvoMain extends Application {
                 LogManager logmgr = LogManager.getLogManager();
                 logmgr.readConfiguration(fis);
                 LOG.log(Level.INFO, "INFO logPropFile: " + logPropFile);
-                LOG.log(Level.FINE, "test FINE: " + logPropFile);
+                LOG.log(Level.FINE, "FINE logPropFile: " + logPropFile);
             } else {
                 System.out.println("initLogging error, log propertis file: " + logPropFile + " not found");
             }

@@ -56,6 +56,7 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.Background;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -64,6 +65,9 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 
 import javax.imageio.ImageIO;
@@ -106,7 +110,7 @@ public class TaskView {
     //
     private final StackPane togPaneAll = new StackPane();
     private final String tog1 = "Cumulative\nPerformance";
-    private final String tog2 = "Batch\nPerformance";
+    private final String tog2 = "Performance\nHistogram";
     private final String tog3 = "Summary";
     private final StackPane togPane1 = new StackPane();
     private final StackPane togPane2 = new StackPane();
@@ -209,13 +213,21 @@ public class TaskView {
             } else {
                 throw new RuntimeException("Error in netOption: " + netOption);
             }
+            FitParamsCache fitParamsCache = FitParamsCache.getInstance();
+            FitParams fitParams = fitParamsCache.getFitParams();
+            LOG.log(Level.INFO, "check fitParams");
+            if(fitParams != null){
+                LOG.log(Level.INFO, "fitParams not null");
+                // train and test allowed to run
+                runBtn.setDisable(false);
+            }
+
             LOG.info("totalSamples: " + totalSamples);
             if (totalSamples == 0) {
                 Alert alert = new Alert(Alert.AlertType.ERROR,
                         "Total samples is zero",
                         ButtonType.OK);
                 Optional<ButtonType> result = alert.showAndWait();
-                LOG.log(Level.INFO, "alert result: " + result);
                 if (result.isPresent() && result.get() == ButtonType.OK) {
                     // do nothing
                 }
@@ -295,6 +307,8 @@ public class TaskView {
                     initCtrPanel();
                     initConfig(config);
                     runTask(netOption);
+                    // disable run button while task is running
+                    runBtn.setDisable(true);
                 }
             });
             //
@@ -418,7 +432,6 @@ public class TaskView {
                     new ChangeListener<Toggle>() {
                         public void changed(ObservableValue<? extends Toggle> ov,
                                             Toggle oldToggle, Toggle newToggle) {
-                            LOG.info("newToggle: " + newToggle);
                             if (newToggle != null) {
                                 String toggleName = ((ToggleButton) newToggle).getText();
                                 // Switches visible pane to match selected toggle button
@@ -540,16 +553,17 @@ public class TaskView {
             yAxis.setAutoRanging(false);
             //
             performanceChart = new LineChart(xAxis, yAxis);
+            // insets: top, right, bottom, left
+            performanceChart.setPadding(new Insets(5, 20, 5, 5));
             // setAnimated to false to allow snapshot
             performanceChart.setAnimated(false);
-            performanceChart.setTitle("Network Performance");
+            performanceChart.setTitle("Cumulative Performance");
+            performanceChart.setStyle("-fx-font-family: Arial; -fx-font-weight: bold; -fx-font-size: 12pt;");
             performanceChart.setTitleSide(Side.TOP);
             performanceChart.setLegendVisible(false);
             performanceChart.setCreateSymbols(false);
             performanceChart.setHorizontalGridLinesVisible(true);
             performanceChart.setVerticalGridLinesVisible(true);
-            //
-            ViewUtil.compact(performanceChart);
             //
             plotSeries.getData().clear();
             performanceChart.getData().add(plotSeries);
@@ -589,9 +603,12 @@ public class TaskView {
             yAxis.setAutoRanging(false);
             //
             histoChart = new LineChart<Number, Number>(xAxis, yAxis);
+            // insets: top, right, bottom, left
+            histoChart.setPadding(new Insets(5, 20, 5, 5));
             // setAnimated to false to allow snapshot
             histoChart.setAnimated(false);
             histoChart.setTitle("Performance Histogram");
+            histoChart.setStyle("-fx-font-family: Arial; -fx-font-weight: bold; -fx-font-size: 12pt;");
             histoChart.setTitleSide(Side.TOP);
             histoChart.setLegendVisible(false);
             histoChart.setCreateSymbols(false);
@@ -627,12 +644,18 @@ public class TaskView {
         try {
             summaryGrid.getChildren().clear();
             summaryPanel.getChildren().clear();
+            summaryGrid.getColumnConstraints().clear();
+            summaryGrid.getRowConstraints().clear();
+            //
             int numClasses = netConfig.outputConfig.numOutputNodes;
             summaryGrid.setHgap(5);
             summaryGrid.setVgap(4);
+            // insets: top, right, bottom, left
+            summaryGrid.setPadding(new Insets(10, 10, 10, 10));
             // set size since initially it will be empty with no computed size
             summaryGrid.setPrefSize(600, 400);
             summaryGrid.setMinSize(600, 400);
+            summaryGrid.setMaxSize(600, 400);
             if (numClasses < 6) {
                 summaryGrid.setPrefSize(400, 300);
             }
@@ -642,7 +665,13 @@ public class TaskView {
             //   summaryGrid.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
             summaryGrid.setStyle("-fx-border-color: green; -fx-border-width: 1px;-fx-border-style: solid;");
             //
+            // font size: point size of the font
+            Font titleFont = Font.font("Arial", FontWeight.BOLD, 20.0);
+            Font subTitleFont = Font.font("Arial", FontWeight.BOLD, 14.0);
+            Font headerFont = Font.font("Arial", FontWeight.BOLD, 12.0);
+            //
             Label rowTitle = new Label("Actual");
+            rowTitle.setFont(subTitleFont);
             rowTitle.setStyle("-fx-rotate: -90;");
             //   rowTitle.setStyle("-fx-rotate: -90; -fx-border-color: blue; -fx-border-width: 1px;-fx-border-style: solid;");
             /*
@@ -675,6 +704,7 @@ public class TaskView {
             //
             // colTitle in row 0
             Label colTitle = new Label("Predicted");
+            colTitle.setFont(subTitleFont);
             // need new RowConstraints for colTitle row
             rowCon = new RowConstraints();
             rowCon.setPercentHeight(5.0);
@@ -683,22 +713,31 @@ public class TaskView {
             // column span is to the right
             GridPane.setColumnSpan(colTitle, 5);
             int labelRow = 1;
-            // need new ColumnConstraints for column labels row
+            // need new RowConstraints for column labels row
             rowCon = new RowConstraints();
-            rowCon.setPercentHeight(5.0);
+            rowCon.setPercentHeight(7.0);
             summaryGrid.getRowConstraints().add(rowCon);
             // create row labels (skip colTitle in row 0 , column labels in row 1)
             int k = 0;
-            double rowPercent = 90.0 / numClasses;
+            double rowPercent = 88.0 / numClasses;
             LOG.info("numClasses: " + numClasses + ", rowPercent: " + rowPercent);
             for (int row = 2; row < 2 + numClasses; row++) {
                 // need new RowConstraints for each row
                 rowCon = new RowConstraints();
                 rowCon.setPercentHeight(rowPercent);
-            //    summaryGrid.getRowConstraints().add(rowCon);
+                summaryGrid.getRowConstraints().add(rowCon);
                 // actual labels
                 Label rowLabel = new Label(String.valueOf(k));
-                summaryGrid.add(rowLabel, labelCol, row);
+                rowLabel.setFont(headerFont);
+                Pane p = new StackPane();
+                StackPane.setAlignment(rowLabel, Pos.CENTER);
+                p.getChildren().add(rowLabel);
+                p.setStyle("-fx-border-color: black; -fx-border-width: 0 1px 0 0;-fx-border-style: none solid none none;");
+                //  use fill and insets for effect of a black border on the right
+                //insets: top, right, bottom, left
+          //      p.setStyle(" -fx-background-fill: black, white; -fx-background-insets: 1, 1 2 2 1 ;");
+           //     p.setBackground(Background.fill(Color.AQUA));
+                summaryGrid.add(p, labelCol, row);
                 k++;
             }
             // create column labels (skip rowTitle in col 0, row labels in col 1)
@@ -708,15 +747,26 @@ public class TaskView {
                 // need new ColumnConstraints for each column
                 colCon = new ColumnConstraints();
                 colCon.setPercentWidth(colPercent);
-             //   summaryGrid.getColumnConstraints().add(colCon);
+                summaryGrid.getColumnConstraints().add(colCon);
                 // predicted labels
                 Label colLabel = new Label(String.valueOf(c));
-                summaryGrid.add(colLabel, col, labelRow);
+                colLabel.setFont(headerFont);
+                Pane p = new StackPane();
+                StackPane.setAlignment(colLabel, Pos.CENTER);
+                p.getChildren().add(colLabel);
+                //border: top, right, bottom, left
+                p.setStyle("-fx-border-color: black; -fx-border-width: 0 0 1px 0;-fx-border-style: none none solid none;");
+                //  use fill and insets for effect of a black border on the bottom
+                //insets: top, right, bottom, left
+          //      p.setStyle(" -fx-background-fill: black, white; -fx-background-insets: 0, 0 0 1 0 ;");
+           //     p.setBackground(Background.fill(Color.AZURE));
+                summaryGrid.add(p, col, labelRow);
                 c++;
             }
             LOG.info("summaryGrid pref W: " + summaryGrid.getPrefWidth() );
             //
             Label summaryTitle = new Label("Confusion Matrix");
+            summaryTitle.setFont(titleFont);
             summaryPanel.getChildren().add(summaryTitle);
             summaryPanel.getChildren().add(summaryGrid);
             summaryPanel.setPrefSize(800, 500);
@@ -768,6 +818,8 @@ public class TaskView {
                     }
                     statusField.setText("Task completed");
                     setCompletedProp(true);
+                    // enable run button after task is completed
+                    runBtn.setDisable(false);
                 }
             });
 
@@ -927,18 +979,19 @@ public class TaskView {
                     // number of correct or incorrect predictions
                     double d = MTX.getCell(confusion, i, j);
                     String n = fmtAsInt.format(d);
-                    Pane pane = new Pane();
                     Label val = new Label(n);
-                    pane.setStyle("-fx-background-color: white; ");
+                    Pane p = new StackPane();
+                    // number right justified
+                    StackPane.setAlignment(val, Pos.CENTER_RIGHT);
+                    p.getChildren().add(val);
+                    p.setStyle("-fx-background-color: white; ");
                     if (i == j) {
-                        pane.setStyle("-fx-background-color: lime; ");
+                        p.setStyle("-fx-background-color: lemonchiffon; ");
                     }
-                    pane.setPrefHeight(24);
-                    pane.getChildren().add(val);
-
+                    p.setPrefHeight(24);
                     // grid already has labels in col 0, 1 and row 0, 1
                     // data goes in other gridd cells
-                    summaryGrid.add(pane, j + 2, i + 2);
+                    summaryGrid.add(p, j + 2, i + 2);
                 }
             }
         } catch (Exception ex) {
@@ -1004,43 +1057,6 @@ public class TaskView {
         }
     }
 
-    public void importFitParams() {
-        try {
-            File file = ViewUtil.openFileDialog("Import Training FitParams");
-            if (file != null) {
-                InputStream src = FileUtil.getInputStream(file);
-                FitParams fitParams = new FitParams();
-                if(taskResult != null) {
-                    fitParams = JsonUtil.jsonToFitParams(src);
-                } else {
-                    fitParams = JsonUtil.jsonToFitParams(src);
-                }
-                FitParamsCache fitParamsCache = FitParamsCache.getInstance();
-                fitParamsCache.setFitParams(fitParams);
-                // train and test allowed to run
-                runBtn.setDisable(false);
-                //
-                setReadyFitParams(true);
-            }
-        } catch (Exception ex) {
-            LOG.log(Level.SEVERE, ex.getMessage(), ex);
-            throw new RuntimeException(ex);
-        }
-    }
-
-    public void exportFitParams() {
-        try {
-            LOG.log(Level.INFO, "Export FitParams");
-            File file = ViewUtil.openCreateFileDialog("Export Training FitParams");
-            if (file != null) {
-                OutputStream fos = FileUtil.getOutputStream(file);
-                JsonUtil.FitParamsToJson(taskResult.netResult.fitParams, fos);
-            }
-        } catch (Exception ex) {
-            LOG.log(Level.SEVERE, ex.getMessage(), ex);
-            throw new RuntimeException(ex);
-        }
-    }
 
     public int subsetSize(int totalSamples) {
         int subsetSize = 100;
