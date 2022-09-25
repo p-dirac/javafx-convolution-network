@@ -1,0 +1,53 @@
+{
+  "generalConfig" : {
+    "trainingDir" : ..\\datasets\\mnist_png\\training",
+    "testingDir" : ..\\datasets\\mnist_png\\testing",
+    "totalTrainingSamples" : 10000,
+    "totalTestingSamples" : 5000
+  },
+  "backPropConfig" : {
+    "rateModel" : {
+      "stepCount" : 200,
+      "decayPerStep" : 0.01,
+      "minRate" : 0.3,
+      "maxRate" : 0.75,
+      "rateFn" : "Triangle Decay"
+    },
+    "lambda" : 1.0E-4,
+    "mu" : 0.9,
+    "batchSize" : 20
+  },
+  "inputConfig" : {
+    "rows" : 28,
+    "cols" : 28
+  },
+  "convoPoolList" : [ {
+    "convoConfig" : {
+      "actName" : "Tiny RELU",
+      "filterSize" : 5,
+      "numFilters" : 20
+    },
+    "poolConfig" : {
+      "actName" : "None",
+      "poolSize" : 2
+    }
+  }, {
+    "convoConfig" : {
+      "actName" : "Tiny RELU",
+      "filterSize" : 5,
+      "numFilters" : 50
+    },
+    "poolConfig" : {
+      "actName" : "None",
+      "poolSize" : 2
+    }
+  } ],
+  "internalList" : [ {
+    "actName" : "Leaky RELU",
+    "numOutputNodes" : 300
+  } ],
+  "outputConfig" : {
+    "actName" : "Softmax",
+    "numOutputNodes" : 10
+  }
+}
