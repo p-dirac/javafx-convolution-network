@@ -2,7 +2,7 @@
 setLocal
 
 set jdkbase=C:\ZZ-java-tools\jdk-18.0.2.1
-set jfxbase=C:\ZZ-java-tools\javafx-sdk-18.0.2
+set jfxbase=C:\ZZ-java-tools\javafx-sdk-19
 
 set jfx=%jfxbase%\bin
 set jfxlibs=%jfxbase%\lib

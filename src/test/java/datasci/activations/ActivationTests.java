@@ -1,6 +1,5 @@
 package datasci.activations;
-
-import datasci.backend.activations.ActE;
+//
 import datasci.backend.activations.LeakyReluActivation;
 import datasci.backend.activations.SigmoidActivation;
 import datasci.backend.activations.SoftmaxActivation;
@@ -8,7 +7,7 @@ import datasci.backend.activations.TanhActivation;
 import datasci.backend.model.Matrix;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
+//
 public class ActivationTests {
 
     @Test

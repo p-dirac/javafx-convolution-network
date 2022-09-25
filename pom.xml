@@ -9,20 +9,22 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <packaging>jar</packaging>
 
     <!-- Group-ID, artifact ID and version of the project. You can modify these as you want -->
-    <groupId>matrixnetwork</groupId>
-    <artifactId>classifier</artifactId>
+    <groupId>datasci</groupId>
+    <artifactId>FxConvoNet</artifactId>
     <version>1.0.0</version>
 
     <!-- Properties Section. Change ND4J versions here, if required -->
     <properties>
-        <java.version>18.02.1</java.version>
-        <javafx.version>18.0.1</javafx.version>
+        <java.version>18</java.version>
+        <javafx.version>19</javafx.version>
         <maven-shade-plugin.version>2.4.3</maven-shade-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <jackson.version>2.13.3</jackson.version>
-        <junit.version>5.9.0-M1</junit.version>
+        <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
+        <jackson.version>2.13.4</jackson.version>
+        <junit.version>5.9.0</junit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -79,7 +81,17 @@
     </dependencies>
 
     <build>
+        <finalName>fxconvonet</finalName>
         <plugins>
+            <!-- Surefire Plugin is used during the test phase of the build lifecycle to execute the unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
             <!-- Maven compiler plugin: compile for Java 8 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -99,27 +111,14 @@
 
             mvn package
             cd target
-            java -cp deeplearning4j-examples-1.0.0-beta-bin.jar org.deeplearning4j.LenetMnistExample
+            java -cp datasci.fxconvonet.jar datasci.frontend.ctrl.FxConvoMain
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>${maven-shade-plugin.version}</version>
                 <configuration>
-                    <shadedArtifactAttached>true</shadedArtifactAttached>
-                    <shadedClassifierName>bin</shadedClassifierName>
-                    <createDependencyReducedPom>true</createDependencyReducedPom>
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>org/datanucleus/**</exclude>
-                                <exclude>META-INF/*.SF</exclude>
-                                <exclude>META-INF/*.DSA</exclude>
-                                <exclude>META-INF/*.RSA</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
+                    <minimizeJar>true</minimizeJar>
                 </configuration>
 
                 <executions>
@@ -129,17 +128,21 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>junit-jupiter-api</exclude>
+                                    <exclude>junit-jupiter-engine</exclude>
+                                    <exclude>C:\ZZ-Data-Science\javafx-convolution-network\target\test-classes</exclude>
+                                </excludes>
+                            </artifactSet>
                             <transformers>
                                 <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                                    <resource>reference.conf</resource>
-                                </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                                <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>datasci.frontend.ctrl.FxConvoMain</mainClass>
                                 </transformer>
                             </transformers>
+
                         </configuration>
                     </execution>
                 </executions>
