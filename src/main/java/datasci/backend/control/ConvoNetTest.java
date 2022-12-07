@@ -21,7 +21,6 @@ import datasci.backend.layers.ConvoLayer;
 import datasci.backend.layers.ConvoPoolLayer;
 import datasci.backend.layers.InternalLayer;
 import datasci.backend.layers.PoolLayer;
-import datasci.backend.model.FitParams;
 import datasci.backend.model.ImageDataUtil;
 import datasci.backend.model.MTX;
 import datasci.backend.model.Matrix;
@@ -33,12 +32,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Implementation convolution network for image classification on MNIST dataset
+ * Implementation of convolution network for image classification on MNIST dataset
  * <p>
  * ref: https://www.analyticsvidhya.com/blog/2020/02/mathematics-behind-convolutional-neural-network/
  * <p>
@@ -123,7 +121,12 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
     public void init(){
         try{
             configureNet(config);
-            prepAll();
+            boolean isOk = prepAll();
+            if(!isOk){
+                String msg = "prepAll failed";
+                LOG.log(Level.SEVERE, msg);
+                throw new RuntimeException(msg);
+            }
             if(netResult.fitParams != null){
                 LOG.info("setting fitParams");
                 setFitParams(netResult.fitParams);
@@ -153,13 +156,12 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
             dataList = prepTestData();
             if (dataList == null) {
                 isOk = false;
-            }
-            if (isOk) {
-                LOG.info("prepActualMatrix");
+                LOG.severe("dataList is null");
+            } else {
+                LOG.info("call prepActualMatrix");
                 // Prepare list of actual column matrices for measuring network performance.
                 actualIndexList = prepActualMatrix();
             }
-            int len = dataList.size();
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, ex.getMessage(), ex);
             throw new RuntimeException(ex);
@@ -183,50 +185,6 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
     public int getBatchSize() {
         return batchSize;
     }
-
-    /**
-     * Train sample.
-     *
-     * @param xIn input sample
-     */
-    public void testAllLayers(Matrix xIn) {
-        try {
-            //    LOG.info("trainSample");
-
-            List<Matrix> poolOut = new ArrayList<>();
-            // add x input to poolOut
-            // input to ConvoLayer may be xIn or poolOut
-            poolOut.add(xIn);
-            //
-            List<Matrix> convoOut = null;
-            Matrix internalIn = null;
-            Matrix internalOut = null;
-            //training forward propagation
-            for (ConvoPoolLayer convoPool : convoPoolLayers) {
-                ConvoLayer convoLayer = convoPool.convoLayer;
-                // input to ConvoLayer may be xIn or poolOut
-                convoOut = convoLayer.testForward(poolOut);
-                //
-                PoolLayer poolLayer = convoPool.poolLayer;
-                poolOut = poolLayer.testForward(convoOut);
-            }
-            // concatenate poolOut matrix list to a single matrix for the internal layer
-            internalIn = MTX.listToSingleCol(poolOut);
-            //
-            for (InternalLayer internal : internalLayers) {
-                internalOut = internal.testForward(internalIn);
-                internalIn = internalOut;
-            }
-      //      internalOut.checkNaN("internalOut");
-            //
-            Matrix finalOut = outputLayer.testForward(internalOut);
-
-        } catch (Exception ex) {
-            LOG.log(Level.SEVERE, ex.getMessage(), ex);
-            throw new RuntimeException(ex);
-        }
-    }
-
 
     /**
      * Prepare test data list.
@@ -275,15 +233,16 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
         return dataList;
     }
     /**
-     * Test network for all samples
+     * Test network forward propagation for all samples
      */
     public void fit() {
         try {
             //testing forward propagation
             int totalSamples = config.generalConfig.totalTestingSamples;
             batchSampleBase = 0;
+            batchSize = 1;
             for (int k = 0; k < totalSamples; k++) {
-                // next batch
+                // batch size equals one sample
                 fitBatch();
             }
         } catch (Exception ex) {
@@ -293,7 +252,7 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
     }
 
     /**
-     * Test network for one batch of samples.
+     * Test network forward propagation for one batch of samples.
      */
     public void fitBatch() {
         try {
@@ -306,12 +265,13 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
                 // next sample image
                 Matrix xIn = netData.getInputData();
                 //
-                // test one image sample forward through all network layers
+                // test one sample forward through all network layers
                 testAllLayers(xIn);
                 //
                 // actual class index for current image sample
                 int actualIndedx = netData.getActualIndex();
                 //  LOG.info("actualIndedx: " + actualIndedx);
+                // update network performance evaluation
                 updateEval(actualIndedx);
                 sampleCount++;
                 batchSampleCount++;
@@ -324,6 +284,51 @@ public class ConvoNetTest extends ConvoNetBase implements ConvoNetI {
             throw new RuntimeException(ex);
         }
     }
+
+    /**
+     * Test one sample in forward propagation thourgh all network layers
+     *
+     * @param xIn input sample
+     */
+    public void testAllLayers(Matrix xIn) {
+        try {
+            //    LOG.info("testAllLayers");
+
+            List<Matrix> poolOut = new ArrayList<>();
+            // add x input to poolOut
+            // input to ConvoLayer may be xIn or poolOut
+            poolOut.add(xIn);
+            //
+            List<Matrix> convoOut = null;
+            Matrix internalIn = null;
+            Matrix internalOut = null;
+            //testing forward propagation in Convolution layer/Pool layer
+            for (ConvoPoolLayer convoPool : convoPoolLayers) {
+                ConvoLayer convoLayer = convoPool.convoLayer;
+                // input to ConvoLayer may be xIn or poolOut
+                convoOut = convoLayer.testForward(poolOut);
+                //
+                PoolLayer poolLayer = convoPool.poolLayer;
+                poolOut = poolLayer.testForward(convoOut);
+            }
+            // concatenate poolOut matrix list to a single matrix for the internal layer
+            internalIn = MTX.listToSingleCol(poolOut);
+            //
+            //testing forward propagation in Internal layer
+            for (InternalLayer internal : internalLayers) {
+                internalOut = internal.testForward(internalIn);
+                internalIn = internalOut;
+            }
+            //
+            //testing forward propagation in Output layer
+            Matrix finalOut = outputLayer.testForward(internalOut);
+
+        } catch (Exception ex) {
+            LOG.log(Level.SEVERE, ex.getMessage(), ex);
+            throw new RuntimeException(ex);
+        }
+    }
+
 
 
 }   // end class
