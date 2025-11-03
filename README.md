@@ -1,7 +1,8 @@
 # JavaFx Convolutional Network
 This project demonstrates the implementation of a JavaFX front end and a convolutional neural network (CNN) back end.
 The front end interface allows the user to create various network scenarios without modifying the code.
-The back end code includes network layers, activation functions, a matrix library, and json utilities. 
+The back end code includes network layers, activation functions, a matrix library, and json utilities. See 
+test folder for sample matrix operations simplified for learning.
 
 See JavaFX-Convolutional-Network.pdf for more information.
 
